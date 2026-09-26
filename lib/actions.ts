@@ -118,13 +118,17 @@ export async function deleteCard(setId: string, cardId: string) {
 export async function saveSession(input: {
   setId: string;
   mode: "flashcards" | "quiz";
-  results: { cardId: string; known: boolean }[];
+  // cardId is null for AI quiz questions that aren't about one specific card.
+  results: { cardId: string | null; known: boolean }[];
   seconds: number;
 }) {
   const supabase = await createClient();
   const now = new Date().toISOString();
-  const knownIds = input.results.filter((r) => r.known).map((r) => r.cardId);
-  const missedIds = input.results.filter((r) => !r.known).map((r) => r.cardId);
+  // A card only counts as known if every question about it was right.
+  const missedIds = [...new Set(input.results.flatMap((r) => (!r.known && r.cardId ? [r.cardId] : [])))];
+  const knownIds = [...new Set(input.results.flatMap((r) => (r.known && r.cardId ? [r.cardId] : [])))].filter(
+    (id) => !missedIds.includes(id)
+  );
 
   await Promise.all([
     knownIds.length &&
@@ -134,7 +138,7 @@ export async function saveSession(input: {
     supabase.from("study_sessions").insert({
       study_set_id: input.setId,
       mode: input.mode,
-      correct: knownIds.length,
+      correct: input.results.filter((r) => r.known).length,
       total: input.results.length,
       seconds: Math.min(Math.max(0, Math.round(input.seconds)), 60 * 60 * 3),
     }),

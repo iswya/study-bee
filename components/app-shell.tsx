@@ -28,7 +28,7 @@ function isActive(pathname: string, href: string) {
 export function AppShell({ children, me, recent }: { children: ReactNode; me: AvatarInfo; recent: RecentSet[] }) {
   const pathname = usePathname();
   // Focus mode: hide the chrome while actually studying.
-  const studying = /\/sets\/[^/]+\/(flashcards|quiz)/.test(pathname);
+  const studying = /\/sets\/[^/]+\/(flashcards|quiz|ai-quiz)/.test(pathname);
 
   return (
     <MotionConfig reducedMotion="user">

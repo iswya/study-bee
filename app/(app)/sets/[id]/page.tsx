@@ -1,4 +1,4 @@
-import { ArrowLeftIcon, CalendarBlankIcon, CardsThreeIcon, CaretRightIcon, ExamIcon, LightningIcon, PathIcon, StackIcon, TagIcon } from "@phosphor-icons/react/ssr";
+import { ArrowLeftIcon, CalendarBlankIcon, CardsThreeIcon, CaretRightIcon, ExamIcon, LightningIcon, PathIcon, SparkleIcon, StackIcon, TagIcon } from "@phosphor-icons/react/ssr";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Avatar } from "@/components/avatar";
@@ -77,7 +77,8 @@ export default async function StudySetPage({ params }: PageProps<"/sets/[id]">) 
               <SectionTitle icon={<LightningIcon size={22} weight="fill" />}>Study</SectionTitle>
               <Stagger className="grid gap-3 sm:grid-cols-2">
                 <Mode href={`/sets/${set.id}/flashcards`} icon={<CardsThreeIcon size={24} weight="duotone" />} tone="bg-honey-50 text-honey-600" title="Flashcards" blurb="Flip and sort what you know" />
-                <Mode href={`/sets/${set.id}/quiz`} icon={<ExamIcon size={24} weight="duotone" />} tone="bg-lilac-50 text-lilac-600" title="Quiz" blurb="Multiple choice" />
+                <Mode href={`/sets/${set.id}/quiz`} icon={<ExamIcon size={24} weight="duotone" />} tone="bg-lilac-50 text-lilac-600" title="Quiz" blurb="Quick multiple choice" />
+                <Mode href={`/sets/${set.id}/ai-quiz`} icon={<SparkleIcon size={24} weight="duotone" />} tone="bg-sky-50 text-sky-600" title="AI quiz" blurb="New questions + explanations" />
               </Stagger>
             </div>
           )}

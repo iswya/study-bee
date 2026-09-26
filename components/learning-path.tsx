@@ -19,7 +19,7 @@ const steps = [
   { label: "Flashcards", icon: CardsThreeIcon, mode: "flashcards" },
   { label: "Quiz", icon: ExamIcon, mode: "quiz" },
   { label: "Redo misses", icon: ArrowCounterClockwiseIcon, mode: "flashcards" },
-  { label: "Final quiz", icon: GraduationCapIcon, mode: "quiz" },
+  { label: "Final quiz", icon: GraduationCapIcon, mode: "ai-quiz" },
 ];
 
 const W = 300;

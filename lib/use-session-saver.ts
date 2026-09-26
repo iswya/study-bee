@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { saveSession } from "@/lib/actions";
 
-type Result = { cardId: string; known: boolean };
+type Result = { cardId: string | null; known: boolean };
 
 // Tracks one study round and saves it once when `finished` flips to true.
 export function useSessionSaver(setId: string, mode: "flashcards" | "quiz", finished: boolean, results: Result[]) {
