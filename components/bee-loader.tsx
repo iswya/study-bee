@@ -4,15 +4,15 @@ import { AnimatePresence, motion } from "motion/react";
 import { useEffect, useState } from "react";
 import { Bee } from "./bee";
 
-const steps = ["Reading your files…", "Finding the key ideas…", "Writing cards…", "Almost done…"];
+const defaultSteps = ["Reading your files…", "Finding the key ideas…", "Writing cards…", "Almost done…"];
 
 // Three bees circling a honeycomb cell while AI works.
-export function BeeLoader() {
+export function BeeLoader({ steps = defaultSteps, hint = "Big PDFs can take a minute" }: { steps?: string[]; hint?: string | null }) {
   const [step, setStep] = useState(0);
   useEffect(() => {
     const id = setInterval(() => setStep((s) => Math.min(s + 1, steps.length - 1)), 6000);
     return () => clearInterval(id);
-  }, []);
+  }, [steps.length]);
 
   return (
     <div className="flex flex-col items-center py-6">
@@ -53,7 +53,7 @@ export function BeeLoader() {
           {steps[step]}
         </motion.p>
       </AnimatePresence>
-      <p className="mt-1 text-xs text-ink-400">Big PDFs can take a minute</p>
+      {hint && <p className="mt-1 text-xs text-ink-400">{hint}</p>}
     </div>
   );
 }

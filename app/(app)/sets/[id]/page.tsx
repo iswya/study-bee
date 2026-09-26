@@ -7,7 +7,7 @@ import { Item, ProgressBar, Stagger } from "@/components/motion";
 import { buttonClass, cardClass, cardLinkClass, pressable, SectionTitle, Tag } from "@/components/ui";
 import { getSet } from "@/lib/data";
 import { accentStyles, formatDate } from "@/lib/types";
-import { CardManager, CopySetButton, DeleteSetButton } from "./set-controls";
+import { AiEditPanel, CardManager, CopySetButton, DeleteSetButton } from "./set-controls";
 
 export default async function StudySetPage({ params }: PageProps<"/sets/[id]">) {
   const { id } = await params;
@@ -84,6 +84,7 @@ export default async function StudySetPage({ params }: PageProps<"/sets/[id]">) 
 
           <div id="cards" className="scroll-mt-8">
             <SectionTitle icon={<StackIcon size={22} weight="fill" />}>Cards · {set.cards.length}</SectionTitle>
+            {mine && hasCards && <AiEditPanel setId={set.id} cards={set.cards} title={set.title} subject={set.subject} />}
             <CardManager setId={set.id} cards={set.cards} readOnly={!mine} />
           </div>
         </div>

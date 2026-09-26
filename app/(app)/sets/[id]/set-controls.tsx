@@ -1,10 +1,11 @@
 "use client";
 
-import { CheckCircleIcon, CopyIcon, PlusIcon, SpinnerGapIcon, TrashIcon } from "@phosphor-icons/react";
+import { CaretDownIcon, CheckCircleIcon, CheckIcon, CopyIcon, PlusIcon, SparkleIcon, SpinnerGapIcon, TrashIcon, XIcon } from "@phosphor-icons/react";
 import { AnimatePresence, motion } from "motion/react";
 import { useActionState, useRef, useState, useTransition } from "react";
 import { buttonClass, cardClass, inputClass, pressable } from "@/components/ui";
-import { addCard, deleteCard, deleteSet } from "@/lib/actions";
+import { addCard, deleteCard, deleteSet, replaceCards } from "@/lib/actions";
+import { AskAi, ChangeSummary, diffCards, StatusBadge, type Draft } from "@/components/ask-ai";
 import { copySet } from "@/lib/social-actions";
 import type { Card } from "@/lib/types";
 import { spring } from "@/lib/motion";
@@ -129,6 +130,84 @@ export function CopySetButton({ setId }: { setId: string }) {
         {pending ? <SpinnerGapIcon size={16} weight="bold" className="animate-spin" /> : <CopyIcon size={16} weight="bold" />}
         Copy to my library
       </button>
+    </div>
+  );
+}
+
+// "Edit with AI": describe a change, review what the AI proposes, then apply.
+export function AiEditPanel({ setId, cards, title, subject }: { setId: string; cards: Card[]; title: string; subject: string }) {
+  const [open, setOpen] = useState(false);
+  const [proposal, setProposal] = useState<{ cards: Draft[]; summary: string } | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [applying, startApplying] = useTransition();
+  const current = cards.map(({ front, back }) => ({ front, back }));
+  const diff = proposal ? diffCards(current, proposal.cards) : null;
+
+  function apply() {
+    if (!proposal) return;
+    setError(null);
+    startApplying(async () => {
+      const result = await replaceCards(setId, proposal.cards);
+      if (result?.error) setError(result.error);
+      else {
+        setProposal(null);
+        setOpen(false);
+      }
+    });
+  }
+
+  return (
+    <div className={`${cardClass} mb-3 overflow-hidden`}>
+      <button
+        type="button"
+        onClick={() => setOpen((o) => !o)}
+        aria-expanded={open}
+        className="flex w-full items-center gap-3 p-4 text-left transition-colors hover:bg-ink-950/[0.02]"
+      >
+        <span className="grid size-9 place-items-center rounded-xl bg-honey-50 text-honey-600">
+          <SparkleIcon size={18} weight="fill" />
+        </span>
+        <span className="flex-1">
+          <span className="block text-sm font-semibold">Edit with AI</span>
+          <span className="block text-xs text-ink-500">Shorten answers, add cards, fix mistakes…</span>
+        </span>
+        <CaretDownIcon size={18} weight="bold" className={`text-ink-400 transition-transform duration-300 ${open ? "rotate-180" : ""}`} />
+      </button>
+
+      <div className={`grid transition-[grid-template-rows] duration-300 ease-out ${open ? "grid-rows-[1fr]" : "grid-rows-[0fr]"}`}>
+        <div className="min-h-0 overflow-hidden">
+          <div className="border-t border-line p-4">
+            {proposal && diff ? (
+              <motion.div initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={spring} className="space-y-3">
+                <ChangeSummary summary={proposal.summary} added={diff.added} edited={diff.edited} removed={diff.removed} />
+                <ul className="max-h-80 divide-y divide-line overflow-y-auto rounded-2xl border border-line">
+                  {proposal.cards.map((c, i) => (
+                    <li key={i} className={`grid gap-1 px-3 py-2.5 text-sm sm:grid-cols-2 sm:gap-3 ${diff.statuses[i] === "same" ? "opacity-60" : ""}`}>
+                      <span className="flex items-start gap-2 font-semibold">
+                        <StatusBadge status={diff.statuses[i]} />
+                        {c.front}
+                      </span>
+                      <span className="text-ink-500">{c.back}</span>
+                    </li>
+                  ))}
+                </ul>
+                {error && <p className="text-sm text-rose-600">{error}</p>}
+                <div className="flex gap-2">
+                  <button type="button" onClick={() => setProposal(null)} disabled={applying} className={buttonClass("outline", "flex-1")}>
+                    <XIcon size={16} weight="bold" /> Discard
+                  </button>
+                  <button type="button" onClick={apply} disabled={applying} className={buttonClass("primary", "flex-1")}>
+                    {applying ? <SpinnerGapIcon size={16} weight="bold" className="animate-spin" /> : <CheckIcon size={16} weight="bold" />}
+                    Apply
+                  </button>
+                </div>
+              </motion.div>
+            ) : (
+              open && <AskAi cards={current} title={title} subject={subject} onResult={(next, summary) => setProposal({ cards: next, summary })} />
+            )}
+          </div>
+        </div>
+      </div>
     </div>
   );
 }

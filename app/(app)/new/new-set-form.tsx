@@ -17,6 +17,7 @@ import {
 } from "@phosphor-icons/react";
 import { AnimatePresence, motion } from "motion/react";
 import { useMemo, useRef, useState, useTransition } from "react";
+import { AskAi, ChangeSummary, diffCards, StatusBadge, type Status } from "@/components/ask-ai";
 import { Bee } from "@/components/bee";
 import { BeeLoader } from "@/components/bee-loader";
 import { buttonClass, cardClass, inputClass } from "@/components/ui";
@@ -46,6 +47,8 @@ export function NewSetForm() {
   const [aiCards, setAiCards] = useState<Draft[] | null>(null);
   const [aiLoading, setAiLoading] = useState(false);
   const [aiError, setAiError] = useState<string | null>(null);
+  const [history, setHistory] = useState<Draft[][]>([]);
+  const [change, setChange] = useState<{ summary: string; statuses: Status[]; added: number; edited: number; removed: number } | null>(null);
 
   const [error, setError] = useState<string | null>(null);
   const [saving, startSaving] = useTransition();
@@ -93,7 +96,28 @@ export function NewSetForm() {
     }
   }
 
+  // AI edits to the draft ("make them shorter", …), with an undo stack.
+  function applyChange(next: Draft[], summary: string) {
+    setHistory((h) => [...h, cards]);
+    setChange({ summary, ...diffCards(cards, next) });
+    setAiCards(next);
+  }
+
+  function undoChange() {
+    const prev = history[history.length - 1];
+    setHistory((h) => h.slice(0, -1));
+    setChange(null);
+    setAiCards(prev);
+  }
+
+  function removeCard(i: number) {
+    setAiCards((list) => list?.filter((_, j) => j !== i) ?? null);
+    setChange((c) => (c ? { ...c, statuses: c.statuses.filter((_, j) => j !== i) } : c));
+  }
+
   async function generate() {
+    setHistory([]);
+    setChange(null);
     setAiError(null);
     setAiLoading(true);
     try {
@@ -266,7 +290,7 @@ export function NewSetForm() {
         <div className="flex items-center justify-between gap-3">
           <Label icon={SparkleIcon} className="mb-0">Make cards with AI</Label>
           {aiCards && (
-            <button type="button" onClick={() => setAiCards(null)} className="flex items-center gap-1 text-xs font-semibold text-ink-500 hover:text-ink-950">
+            <button type="button" onClick={() => { setAiCards(null); setHistory([]); setChange(null); }} className="flex items-center gap-1 text-xs font-semibold text-ink-500 hover:text-ink-950">
               <ArrowCounterClockwiseIcon size={14} weight="bold" /> Undo
             </button>
           )}
@@ -301,10 +325,22 @@ export function NewSetForm() {
       <AnimatePresence>
         {cards.length > 0 && (
           <motion.section initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }} transition={{ duration: 0.3, ease }} className="overflow-hidden">
-            <p className="mb-2 flex items-center gap-1.5 text-sm font-semibold text-ink-700">
-              <CardsThreeIcon size={18} weight="duotone" className="text-honey-600" />
-              {cards.length} cards {aiCards ? "from AI" : "from your text"}
-            </p>
+            <div className="mb-2 flex items-center justify-between gap-3">
+              <p className="flex items-center gap-1.5 text-sm font-semibold text-ink-700">
+                <CardsThreeIcon size={18} weight="duotone" className="text-honey-600" />
+                {cards.length} cards {aiCards ? "from AI" : "from your text"}
+              </p>
+              {history.length > 0 && (
+                <button type="button" onClick={undoChange} className="flex items-center gap-1 text-xs font-semibold text-ink-500 hover:text-ink-950">
+                  <ArrowCounterClockwiseIcon size={14} weight="bold" /> Undo change
+                </button>
+              )}
+            </div>
+            {change && (
+              <div className="mb-2">
+                <ChangeSummary {...change} />
+              </div>
+            )}
             <ul className={`${cardClass} max-h-96 divide-y divide-line overflow-y-auto`}>
               {cards.map((c, i) => (
                 <motion.li
@@ -314,16 +350,22 @@ export function NewSetForm() {
                   transition={{ delay: Math.min(i, 15) * 0.02 }}
                   className="group grid grid-cols-[1fr_auto] gap-x-3 px-4 py-3 sm:grid-cols-[1fr_1fr_auto]"
                 >
-                  <p className="text-sm font-semibold">{c.front}</p>
+                  <p className="flex items-start gap-2 text-sm font-semibold">
+                    {change && <StatusBadge status={change.statuses[i]} />}
+                    {c.front}
+                  </p>
                   <p className="col-start-1 text-sm text-ink-500 sm:col-start-auto">{c.back}</p>
                   {aiCards && (
-                    <button type="button" aria-label="Remove card" onClick={() => setAiCards(aiCards.filter((_, j) => j !== i))} className="col-start-2 row-start-1 grid size-7 place-items-center rounded-lg text-ink-400 hover:bg-rose-50 hover:text-rose-600 sm:col-start-3">
+                    <button type="button" aria-label="Remove card" onClick={() => removeCard(i)} className="col-start-2 row-start-1 grid size-7 place-items-center rounded-lg text-ink-400 hover:bg-rose-50 hover:text-rose-600 sm:col-start-3">
                       <XIcon size={14} weight="bold" />
                     </button>
                   )}
                 </motion.li>
               ))}
             </ul>
+            <div className="mt-3">
+              <AskAi cards={cards} title={title} subject={subject} onResult={applyChange} />
+            </div>
           </motion.section>
         )}
       </AnimatePresence>

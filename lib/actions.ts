@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { getUser } from "@/lib/data";
 import { accents, type Accent } from "@/lib/types";
 
 export type FormState = { error?: string } | undefined;
@@ -70,6 +71,41 @@ export async function addCard(setId: string, front: string, back: string): Promi
   if (error) return { error: error.message };
 
   revalidatePath(`/sets/${setId}`);
+}
+
+// Swap a set's cards for an AI-edited list. Cards that come back unchanged
+// keep their "known" progress.
+export async function replaceCards(setId: string, cards: { front: string; back: string }[]): Promise<FormState> {
+  const user = await getUser();
+  if (!user) return { error: "Log in first." };
+  const clean = cards
+    .map((c) => ({ front: c.front.trim().slice(0, 2000), back: c.back.trim().slice(0, 2000) }))
+    .filter((c) => c.front && c.back)
+    .slice(0, 500);
+  if (!clean.length) return { error: "A set needs at least one card." };
+
+  const supabase = await createClient();
+  const { data: set } = await supabase.from("study_sets").select("id").eq("id", setId).eq("user_id", user.id).maybeSingle();
+  if (!set) return { error: "You can only edit your own sets." };
+
+  const { data: old } = await supabase.from("cards").select("id, front, back, known").eq("study_set_id", setId);
+  const knownBefore = new Map((old ?? []).map((c) => [`${c.front}\u0000${c.back}`, c.known]));
+
+  // Insert the new list first, then remove the old rows — so a failure
+  // part-way never leaves the set empty.
+  const { error } = await supabase.from("cards").insert(
+    clean.map((c, i) => ({
+      study_set_id: setId,
+      front: c.front,
+      back: c.back,
+      position: i,
+      known: knownBefore.get(`${c.front}\u0000${c.back}`) ?? false,
+    }))
+  );
+  if (error) return { error: error.message };
+  if (old?.length) await supabase.from("cards").delete().in("id", old.map((c) => c.id));
+
+  revalidatePath("/", "layout");
 }
 
 export async function deleteCard(setId: string, cardId: string) {

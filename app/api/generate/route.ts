@@ -1,4 +1,4 @@
-import Anthropic from "@anthropic-ai/sdk";
+import { askClaude, cardsSchema, cleanCards } from "@/lib/ai";
 import type { BetaContentBlockParam } from "@anthropic-ai/sdk/resources/beta/messages/messages";
 import mammoth from "mammoth";
 import { NextResponse, type NextRequest } from "next/server";
@@ -25,15 +25,7 @@ const schema = {
   properties: {
     title: { type: "string" },
     subject: { type: "string" },
-    cards: {
-      type: "array",
-      items: {
-        type: "object",
-        properties: { front: { type: "string" }, back: { type: "string" } },
-        required: ["front", "back"],
-        additionalProperties: false,
-      },
-    },
+    cards: cardsSchema,
   },
   required: ["title", "subject", "cards"],
   additionalProperties: false,
@@ -77,7 +69,6 @@ export async function POST(request: NextRequest) {
   const { data: auth } = await supabase.auth.getClaims();
   if (!auth?.claims) return fail("Log in first.", 401);
 
-  if (!process.env.ANTHROPIC_API_KEY) return fail("AI isn't set up yet (missing ANTHROPIC_API_KEY).", 500);
 
   const form = await request.formData();
   const files = form.getAll("files").filter((f): f is File => f instanceof File);
@@ -102,36 +93,10 @@ export async function POST(request: NextRequest) {
     text: `Make ${howMany}.${focus ? ` The student asked: ${focus}` : ""}`,
   });
 
-  const client = new Anthropic();
-  try {
-    const message = await client.beta.messages
-      .stream({
-        model: "claude-opus-5",
-        max_tokens: 32000,
-        system: SYSTEM,
-        output_config: { effort: "medium", format: { type: "json_schema", schema } },
-        // If a safety classifier declines, retry on Anthropic's recommended fallback model.
-        betas: ["server-side-fallback-2026-07-01"],
-        fallbacks: "default",
-        messages: [{ role: "user", content }],
-      })
-      .finalMessage();
+  const result = await askClaude<Generated>(SYSTEM, content, schema);
+  if (!result.ok) return fail(result.error, result.status);
 
-    if (message.stop_reason === "refusal") return fail("The AI declined to make cards from this material.", 422);
-    if (message.stop_reason === "max_tokens") return fail("That's too much material for one set. Try splitting it up.", 422);
-
-    const text = message.content.flatMap((b) => (b.type === "text" ? [b.text] : [])).join("");
-    const result = JSON.parse(text) as Generated;
-    const cards = result.cards.filter((c) => c.front?.trim() && c.back?.trim()).slice(0, 200);
-    if (!cards.length) return fail("Couldn't find anything to make cards from.", 422);
-
-    return NextResponse.json({ title: result.title, subject: result.subject, cards });
-  } catch (error) {
-    if (error instanceof Anthropic.RateLimitError) return fail("The AI is busy. Try again in a minute.", 429);
-    if (error instanceof Anthropic.BadRequestError) return fail(`The AI couldn't read that: ${error.message}`, 400);
-    if (error instanceof Anthropic.AuthenticationError) return fail("The AI key is invalid.", 500);
-    if (error instanceof Anthropic.APIError) return fail(`AI error (${error.status}). Try again.`, 502);
-    if (error instanceof SyntaxError) return fail("The AI sent back something unreadable. Try again.", 502);
-    throw error;
-  }
+  const cards = cleanCards(result.data.cards, 200);
+  if (!cards.length) return fail("Couldn't find anything to make cards from.", 422);
+  return NextResponse.json({ title: result.data.title, subject: result.data.subject, cards });
 }
