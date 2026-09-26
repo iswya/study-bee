@@ -1,10 +1,11 @@
 "use client";
 
-import { ArrowRight, Check, X } from "lucide-react";
+import { ArrowRightIcon, CheckIcon, XIcon } from "@phosphor-icons/react";
 import { AnimatePresence, motion } from "motion/react";
 import { useEffect, useMemo, useState } from "react";
-import type { Card } from "@/lib/demo-data";
+import type { Card } from "@/lib/types";
 import { ease, spring } from "@/lib/motion";
+import { useSessionSaver } from "@/lib/use-session-saver";
 import { Results } from "./results";
 import { StudyHeader } from "./study-header";
 import { buttonClass } from "./ui";
@@ -28,15 +29,12 @@ function seededShuffle<T>(items: T[], seed: string) {
 function buildQuestions(cards: Card[], round: number) {
   return seededShuffle(cards, `order-${round}`).map((card) => {
     const wrong = seededShuffle(
-      cards.filter((c) => c.id !== card.id),
+      cards.filter((c) => c.id !== card.id && c.back !== card.back),
       `${card.id}-${round}`
     ).slice(0, 3);
     return {
       card,
-      options: seededShuffle([card, ...wrong], `opts-${card.id}-${round}`).map((c) => ({
-        id: c.id,
-        text: c.back,
-      })),
+      options: seededShuffle([card, ...wrong], `opts-${card.id}-${round}`).map((c) => ({ id: c.id, text: c.back })),
     };
   });
 }
@@ -46,16 +44,17 @@ export function Quiz({ setId, title, cards }: { setId: string; title: string; ca
   const questions = useMemo(() => buildQuestions(cards, round), [cards, round]);
   const [index, setIndex] = useState(0);
   const [picked, setPicked] = useState<string | null>(null);
-  const [score, setScore] = useState(0);
+  const [results, setResults] = useState<{ cardId: string; known: boolean }[]>([]);
 
   const q = questions[index];
   const finished = index >= questions.length;
   const answered = picked !== null;
+  const saving = useSessionSaver(setId, "quiz", finished, results);
 
   function pick(id: string) {
     if (answered) return;
     setPicked(id);
-    if (id === q.card.id) setScore((s) => s + 1);
+    setResults((r) => [...r, { cardId: q.card.id, known: id === q.card.id }]);
   }
 
   function next() {
@@ -84,8 +83,9 @@ export function Quiz({ setId, title, cards }: { setId: string; title: string; ca
       <div className="mx-auto flex w-full max-w-2xl flex-1 flex-col justify-center px-4 py-8">
         {finished ? (
           <Results
-            correct={score}
+            correct={results.filter((r) => r.known).length}
             total={questions.length}
+            saving={saving}
             actions={[
               {
                 label: "Try again",
@@ -93,10 +93,11 @@ export function Quiz({ setId, title, cards }: { setId: string; title: string; ca
                 onClick: () => {
                   setRound((r) => r + 1);
                   setIndex(0);
-                  setScore(0);
+                  setResults([]);
                 },
               },
-              { label: "Back to flashcards", href: `/sets/${setId}/flashcards` },
+              { label: "Flashcards", href: `/sets/${setId}/flashcards` },
+              { label: "Back to set", href: `/sets/${setId}` },
             ]}
           />
         ) : (
@@ -108,12 +109,8 @@ export function Quiz({ setId, title, cards }: { setId: string; title: string; ca
               exit={{ opacity: 0, x: -24 }}
               transition={{ duration: 0.3, ease }}
             >
-              <p className="text-xs font-semibold uppercase tracking-wider text-ink-400">
-                Question {index + 1}
-              </p>
-              <h1 className="mt-2 font-display text-2xl font-semibold leading-snug tracking-tight text-balance sm:text-3xl">
-                {q.card.front}
-              </h1>
+              <p className="text-xs font-bold uppercase tracking-wider text-ink-400">Question {index + 1}</p>
+              <h1 className="mt-2 text-balance font-display text-2xl font-semibold leading-snug sm:text-3xl">{q.card.front}</h1>
 
               <div className="mt-8 grid gap-3">
                 {q.options.map((opt, i) => {
@@ -129,7 +126,7 @@ export function Quiz({ setId, title, cards }: { setId: string; title: string; ca
                       animate={
                         state === "wrong"
                           ? { opacity: 1, y: 0, x: [0, -8, 8, -5, 5, 0] }
-                          : { opacity: state === "dim" ? 0.45 : 1, y: 0, scale: state === "right" ? 1.02 : 1 }
+                          : { opacity: state === "dim" ? 0.4 : 1, y: 0, scale: state === "right" ? 1.02 : 1 }
                       }
                       transition={state === "wrong" ? { duration: 0.4 } : { ...spring, delay: answered ? 0 : i * 0.05 }}
                       className={`group flex items-center gap-4 rounded-2xl border-2 p-4 text-left transition-colors ${
@@ -137,19 +134,19 @@ export function Quiz({ setId, title, cards }: { setId: string; title: string; ca
                           ? "border-mint-500 bg-mint-50"
                           : state === "wrong"
                             ? "border-rose-500 bg-rose-50"
-                            : "border-line bg-surface hover:border-brand-300 hover:bg-brand-50/40"
+                            : "border-line bg-surface hover:border-honey-400 hover:bg-honey-50"
                       }`}
                     >
                       <span
-                        className={`grid size-8 shrink-0 place-items-center rounded-lg text-sm font-semibold transition-colors ${
+                        className={`grid size-9 shrink-0 place-items-center rounded-xl font-display text-sm font-semibold transition-colors ${
                           state === "right"
                             ? "bg-mint-500 text-white"
                             : state === "wrong"
                               ? "bg-rose-500 text-white"
-                              : "bg-canvas text-ink-500 group-hover:bg-brand-100 group-hover:text-brand-700"
+                              : "bg-ink-950/5 text-ink-500 group-hover:bg-honey-400 group-hover:text-honey-ink"
                         }`}
                       >
-                        {state === "right" ? <Check className="size-4" /> : state === "wrong" ? <X className="size-4" /> : i + 1}
+                        {state === "right" ? <CheckIcon size={18} weight="bold" /> : state === "wrong" ? <XIcon size={18} weight="bold" /> : i + 1}
                       </span>
                       <span className="font-medium">{opt.text}</span>
                     </motion.button>
@@ -157,7 +154,7 @@ export function Quiz({ setId, title, cards }: { setId: string; title: string; ca
                 })}
               </div>
 
-              <div className="mt-8 flex min-h-11 items-center justify-between gap-4">
+              <div className="mt-8 flex min-h-12 items-center justify-between gap-4">
                 <AnimatePresence>
                   {answered && (
                     <motion.p
@@ -165,7 +162,7 @@ export function Quiz({ setId, title, cards }: { setId: string; title: string; ca
                       animate={{ opacity: 1, y: 0 }}
                       className={`text-sm font-semibold ${picked === q.card.id ? "text-mint-600" : "text-rose-600"}`}
                     >
-                      {picked === q.card.id ? "Nice, that's it!" : "Not quite — the right one's in green."}
+                      {picked === q.card.id ? "Correct" : "Wrong — answer in green"}
                     </motion.p>
                   )}
                 </AnimatePresence>
@@ -178,11 +175,11 @@ export function Quiz({ setId, title, cards }: { setId: string; title: string; ca
                     autoFocus
                     className={buttonClass("primary", "ml-auto")}
                   >
-                    {index + 1 === questions.length ? "See results" : "Next"} <ArrowRight className="size-4" />
+                    {index + 1 === questions.length ? "Results" : "Next"} <ArrowRightIcon size={16} weight="bold" />
                   </motion.button>
                 )}
               </div>
-              {!answered && <p className="text-center text-xs text-ink-400">Tip: press 1–{q.options.length} to answer</p>}
+              {!answered && <p className="text-center text-xs text-ink-400">Keys 1–{q.options.length} to answer</p>}
             </motion.div>
           </AnimatePresence>
         )}

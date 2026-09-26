@@ -2,96 +2,185 @@
 
 /*
  * Study Bee design tokens.
- * Use these via Tailwind classes (bg-brand-500, text-ink-500, font-display…)
- * instead of one-off hex values so everything stays consistent.
+ * Dark is the default; <html class="light"> swaps to light.
+ * Only use these via Tailwind classes (bg-surface, text-ink-500, bg-honey-400…)
+ * so both themes stay consistent automatically.
  */
+@custom-variant light (&:where(.light, .light *));
+
 @theme inline {
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-  --font-display: var(--font-bricolage);
+  --font-sans: var(--font-montserrat);
+  --font-display: var(--font-fredoka);
+
+  --color-canvas: var(--canvas);
+  --color-surface: var(--surface);
+  --color-raised: var(--raised);
+  --color-line: var(--line);
+  --color-ink-950: var(--ink-950);
+  --color-ink-900: var(--ink-900);
+  --color-ink-700: var(--ink-700);
+  --color-ink-500: var(--ink-500);
+  --color-ink-400: var(--ink-400);
+  --color-ink-300: var(--ink-300);
+
+  --color-honey-50: var(--honey-50);
+  --color-honey-100: var(--honey-100);
+  --color-honey-200: var(--honey-200);
+  --color-honey-600: var(--honey-600);
+  --color-honey-700: var(--honey-700);
+  --color-mint-50: var(--mint-50);
+  --color-mint-600: var(--mint-600);
+  --color-rose-50: var(--rose-50);
+  --color-rose-600: var(--rose-600);
+  --color-sky-50: var(--sky-50);
+  --color-sky-600: var(--sky-600);
+  --color-lilac-50: var(--lilac-50);
+  --color-lilac-600: var(--lilac-600);
+
+  --shadow-card: var(--shadow-card);
+  --shadow-lift: var(--shadow-lift);
 }
 
 @theme {
-  /* Brand: calm indigo-violet */
-  --color-brand-50: #f3f1ff;
-  --color-brand-100: #e7e3ff;
-  --color-brand-200: #cfc7ff;
-  --color-brand-300: #aea1fb;
-  --color-brand-400: #8c7bf5;
-  --color-brand-500: #6d5ae8;
-  --color-brand-600: #5a45d6;
-  --color-brand-700: #4935b3;
-  --color-brand-800: #3a2c8c;
-  --color-brand-900: #231b57;
+  /* Same in both themes */
+  --color-honey-300: #ffcf5c;
+  --color-honey-400: #fbb829;
+  --color-honey-500: #f0a007;
+  --color-honey-ink: #1f1a12; /* text on honey */
+  --color-mint-500: #2fbf85;
+  --color-rose-500: #f2557a;
+  --color-sky-500: #3aa6f0;
+  --color-lilac-500: #a98bf5;
 
-  /* Accent: honey (it's a bee thing) */
-  --color-honey-50: #fff8eb;
-  --color-honey-100: #ffedc7;
-  --color-honey-200: #ffdb8f;
-  --color-honey-300: #ffc857;
-  --color-honey-400: #fbb42c;
-  --color-honey-500: #f39c12;
-  --color-honey-600: #d57f06;
-  --color-honey-700: #a85f08;
+  --radius-card: 1.5rem;
+  --shadow-honey: 0 10px 30px -10px rgb(240 160 7 / 0.55);
+}
 
-  /* Neutrals, slightly cool so they sit well next to the indigo */
-  --color-ink-950: #13122a;
-  --color-ink-900: #1d1b38;
-  --color-ink-700: #3b3957;
-  --color-ink-500: #6b6987;
-  --color-ink-400: #9492ad;
-  --color-ink-300: #c3c1d6;
-  --color-line: #e9e7f3;
-  --color-canvas: #f6f5fb;
-  --color-surface: #ffffff;
+:root {
+  color-scheme: dark;
+  --canvas: #110f0b;
+  --surface: #1a1712;
+  --raised: #231f18;
+  --line: #2f2a21;
+  --ink-950: #f7f1e6;
+  --ink-900: #ebe3d4;
+  --ink-700: #cbbfab;
+  --ink-500: #9d917d;
+  --ink-400: #7b715f;
+  --ink-300: #4f473a;
 
-  /* Feedback */
-  --color-mint-50: #e9faf3;
-  --color-mint-500: #16b37e;
-  --color-mint-600: #0f9468;
-  --color-rose-50: #fff0f2;
-  --color-rose-500: #f0476a;
-  --color-rose-600: #d63356;
-  --color-sky-50: #eaf6ff;
-  --color-sky-500: #2f9bea;
-  --color-sky-600: #1f7fc7;
+  --honey-50: #2b2213;
+  --honey-100: #3a2c14;
+  --honey-200: #574018;
+  --honey-600: #fcc444;
+  --honey-700: #ffd772;
+  --mint-50: #12291f;
+  --mint-600: #5ad6a2;
+  --rose-50: #2e161c;
+  --rose-600: #ff8aa5;
+  --sky-50: #122536;
+  --sky-600: #7cc4ff;
+  --lilac-50: #221d33;
+  --lilac-600: #c5b0ff;
 
-  --radius-card: 1.25rem;
+  --shadow-card: 0 1px 0 rgb(255 255 255 / 0.03) inset, 0 10px 30px -18px rgb(0 0 0 / 0.8);
+  --shadow-lift: 0 1px 0 rgb(255 255 255 / 0.04) inset, 0 24px 50px -20px rgb(0 0 0 / 0.9);
+  --trail: rgb(251 184 41 / 0.14);
+  --comb: rgb(251 184 41 / 0.06);
+}
 
-  --shadow-card: 0 1px 2px rgb(19 18 42 / 0.04), 0 8px 24px -12px rgb(19 18 42 / 0.12);
-  --shadow-lift: 0 2px 4px rgb(19 18 42 / 0.04), 0 18px 40px -16px rgb(19 18 42 / 0.22);
-  --shadow-brand: 0 10px 30px -10px rgb(90 69 214 / 0.55);
-  --shadow-honey: 0 10px 30px -10px rgb(243 156 18 / 0.6);
+:root.light {
+  color-scheme: light;
+  --canvas: #fbf7ef;
+  --surface: #ffffff;
+  --raised: #fffdf8;
+  --line: #ede5d6;
+  --ink-950: #1f1a12;
+  --ink-900: #2d271d;
+  --ink-700: #4d4436;
+  --ink-500: #7b705e;
+  --ink-400: #a69b88;
+  --ink-300: #d3c9b7;
+
+  --honey-50: #fff6e0;
+  --honey-100: #ffeabb;
+  --honey-200: #ffd98a;
+  --honey-600: #b87503;
+  --honey-700: #8f5a05;
+  --mint-50: #e6f8ef;
+  --mint-600: #13875a;
+  --rose-50: #ffedf1;
+  --rose-600: #c42f53;
+  --sky-50: #e8f4fe;
+  --sky-600: #1a74b8;
+  --lilac-50: #f2edff;
+  --lilac-600: #6d4fd0;
+
+  --shadow-card: 0 1px 2px rgb(60 40 10 / 0.05), 0 10px 26px -14px rgb(60 40 10 / 0.18);
+  --shadow-lift: 0 2px 4px rgb(60 40 10 / 0.05), 0 22px 44px -18px rgb(60 40 10 / 0.3);
+  --trail: rgb(184 117 3 / 0.18);
+  --comb: rgb(184 117 3 / 0.07);
 }
 
 body {
-  background: var(--color-canvas);
-  color: var(--color-ink-950);
+  background: var(--canvas);
+  color: var(--ink-950);
 }
 
 ::selection {
-  background: var(--color-honey-200);
-  color: var(--color-ink-950);
+  background: var(--color-honey-400);
+  color: var(--color-honey-ink);
 }
 
-/* Keyboard focus that matches the brand everywhere */
 :focus-visible {
-  outline: 2px solid var(--color-brand-500);
+  outline: 2px solid var(--color-honey-400);
   outline-offset: 3px;
-  border-radius: 10px;
+  border-radius: 12px;
 }
 
-/* Soft honeycomb pattern used on hero cards */
+/* Honeycomb pattern (used on honey-colored cards) */
 .honeycomb {
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='28' height='49' viewBox='0 0 28 49'%3E%3Cpath fill='none' stroke='white' stroke-opacity='0.12' stroke-width='1' d='M13.99 9.25l13 7.5v15l-13 7.5L1 31.75v-15l12.99-7.5zM3 17.9v12.7l10.99 6.34 11-6.35V17.9l-11-6.34L3 17.9zM0 15l12.98-7.5V0h-2v6.35L0 12.69v2.3zm0 18.5L12.98 41v8h-2v-6.85L0 35.81v-2.3zM15 0v7.5L27.99 15H28v-2.31h-.01L17 6.35V0h-2zm0 49v-8l12.99-7.5H28v2.31h-.01L17 42.15V49h-2z'/%3E%3C/svg%3E");
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='28' height='49' viewBox='0 0 28 49'%3E%3Cpath fill='none' stroke='%231f1a12' stroke-opacity='0.1' stroke-width='1.2' d='M13.99 9.25l13 7.5v15l-13 7.5L1 31.75v-15l12.99-7.5zM3 17.9v12.7l10.99 6.34 11-6.35V17.9l-11-6.34L3 17.9zM0 15l12.98-7.5V0h-2v6.35L0 12.69v2.3zm0 18.5L12.98 41v8h-2v-6.85L0 35.81v-2.3zM15 0v7.5L27.99 15H28v-2.31h-.01L17 6.35V0h-2zm0 49v-8l12.99-7.5H28v2.31h-.01L17 42.15V49h-2z'/%3E%3C/svg%3E");
 }
 
-.perspective {
-  perspective: 1400px;
+/* Bee wings flap */
+.bee-wing {
+  transform-box: fill-box;
+  transform-origin: 50% 90%;
+  animation: bee-flap 0.11s ease-in-out infinite alternate;
 }
-.preserve-3d {
-  transform-style: preserve-3d;
+@keyframes bee-flap {
+  from { transform: scaleY(1); }
+  to { transform: scaleY(0.45); }
 }
+
+/* Gentle hover in place */
+.bee-hover {
+  animation: bee-hover 2.4s ease-in-out infinite;
+}
+@keyframes bee-hover {
+  0%, 100% { transform: translate(0, 0) rotate(-4deg); }
+  50% { transform: translate(2px, -5px) rotate(4deg); }
+}
+
+/* Honey shimmer across progress bars */
+.honey-shimmer {
+  background-image: linear-gradient(100deg, transparent 20%, rgb(255 255 255 / 0.35) 50%, transparent 80%);
+  background-size: 200% 100%;
+  animation: shimmer 2.8s ease-in-out infinite;
+}
+@keyframes shimmer {
+  from { background-position: 150% 0; }
+  to { background-position: -50% 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .bee-wing, .bee-hover, .honey-shimmer { animation: none; }
+  .bee-flyer { display: none; }
+}
+
+.perspective { perspective: 1400px; }
+.preserve-3d { transform-style: preserve-3d; }
 .backface-hidden {
   backface-visibility: hidden;
   -webkit-backface-visibility: hidden;

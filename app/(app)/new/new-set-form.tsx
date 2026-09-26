@@ -1,235 +1,161 @@
 "use client";
 
-import { ClipboardPaste, FileUp, Loader2, Sparkles, Upload, X } from "lucide-react";
+import { ClipboardTextIcon, UploadSimpleIcon, XIcon } from "@phosphor-icons/react";
 import { AnimatePresence, motion } from "motion/react";
-import Link from "next/link";
-import { useRef, useState } from "react";
-import { buttonClass } from "@/components/ui";
-import { accentStyles, type Accent } from "@/lib/demo-data";
+import { useMemo, useRef, useState, useTransition } from "react";
+import { Bee } from "@/components/bee";
+import { buttonClass, cardClass, inputClass } from "@/components/ui";
+import { createSet } from "@/lib/actions";
+import { parseCards } from "@/lib/parse-cards";
+import { accents, accentStyles, type Accent } from "@/lib/types";
 import { ease, spring } from "@/lib/motion";
 
-const accents: Accent[] = ["brand", "honey", "mint", "sky", "rose"];
-const inputCls =
-  "h-12 w-full rounded-xl border border-line bg-surface px-4 text-sm outline-none transition placeholder:text-ink-400 focus:border-brand-400 focus:ring-4 focus:ring-brand-100";
+const example = `Mitochondria - makes energy (ATP) for the cell
+Ribosome - builds proteins
+Nucleus: holds the DNA`;
 
 export function NewSetForm() {
-  const [tab, setTab] = useState<"paste" | "upload">("paste");
   const [title, setTitle] = useState("");
   const [subject, setSubject] = useState("");
-  const [accent, setAccent] = useState<Accent>("brand");
+  const [accent, setAccent] = useState<Accent>("honey");
   const [text, setText] = useState("");
-  const [file, setFile] = useState<File | null>(null);
+  const [fileName, setFileName] = useState<string | null>(null);
   const [dragging, setDragging] = useState(false);
-  const [useAI, setUseAI] = useState(true);
-  const [status, setStatus] = useState<"idle" | "saving" | "done">("idle");
+  const [error, setError] = useState<string | null>(null);
+  const [pending, startTransition] = useTransition();
   const fileInput = useRef<HTMLInputElement>(null);
 
-  const hasSource = tab === "paste" ? text.trim().length > 0 : file !== null;
-  const canSubmit = title.trim().length > 0 && hasSource && status === "idle";
+  const cards = useMemo(() => parseCards(text), [text]);
 
-  function onSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    if (!canSubmit) return;
-    setStatus("saving");
-    // TODO: save to Supabase (study_sets) and generate cards.
-    setTimeout(() => setStatus("done"), 1400);
+  async function loadFile(file: File | undefined) {
+    if (!file) return;
+    if (!/\.(txt|md|csv|tsv)$/i.test(file.name)) {
+      setError("Only .txt, .md, .csv, or .tsv files for now — for PDFs, copy the text and paste it.");
+      return;
+    }
+    let content = await file.text();
+    // CSV: treat the first comma on each line as the term/definition split.
+    if (/\.csv$/i.test(file.name)) content = content.replace(/^([^,\n]+),/gm, "$1\t");
+    setText(content);
+    setFileName(file.name);
+    setError(null);
+    if (!title) setTitle(file.name.replace(/\.[^.]+$/, ""));
   }
 
-  if (status === "done") {
-    return (
-      <motion.div
-        initial={{ opacity: 0, scale: 0.95 }}
-        animate={{ opacity: 1, scale: 1 }}
-        transition={spring}
-        className="mt-8 rounded-3xl border border-line bg-surface p-8 text-center shadow-card"
-      >
-        <div className="mx-auto grid size-14 place-items-center rounded-2xl bg-honey-50 text-2xl">🐝</div>
-        <h2 className="mt-4 font-display text-xl font-semibold tracking-tight">Looks good!</h2>
-        <p className="mx-auto mt-2 max-w-sm text-sm text-ink-500">
-          Saving isn&apos;t hooked up yet — that&apos;s the next thing we build. For now, try one of the
-          sample sets.
-        </p>
-        <div className="mt-6 flex justify-center gap-2">
-          <Link href="/sets/french-revolution" className={buttonClass("primary")}>
-            Open a sample set
-          </Link>
-          <button onClick={() => setStatus("idle")} className={buttonClass("outline")}>
-            Back to form
-          </button>
-        </div>
-      </motion.div>
-    );
+  function submit(e: React.FormEvent) {
+    e.preventDefault();
+    setError(null);
+    startTransition(async () => {
+      const result = await createSet({ title, subject, accent, sourceText: text, cards });
+      if (result?.error) setError(result.error);
+    });
   }
 
   return (
-    <form onSubmit={onSubmit} className="mt-8 space-y-6">
-      <div className="grid gap-4 sm:grid-cols-2">
+    <form onSubmit={submit} className="mt-8 space-y-6">
+      <div className="grid gap-4 sm:grid-cols-[1fr_1fr_auto]">
         <Field label="Title">
-          <input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="e.g. Bio Unit 2" className={inputCls} />
+          <input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Bio unit 2" className={inputClass} required />
         </Field>
         <Field label="Subject">
-          <input value={subject} onChange={(e) => setSubject(e.target.value)} placeholder="e.g. Biology" className={inputCls} />
+          <input value={subject} onChange={(e) => setSubject(e.target.value)} placeholder="Biology" className={inputClass} />
         </Field>
-      </div>
-
-      <Field label="Color">
-        <div className="flex gap-3">
-          {accents.map((a) => (
-            <button
-              key={a}
-              type="button"
-              onClick={() => setAccent(a)}
-              aria-label={a}
-              aria-pressed={accent === a}
-              className="relative grid size-10 place-items-center rounded-full"
-            >
-              {accent === a && (
-                <motion.span layoutId="accent-ring" className="absolute inset-0 rounded-full ring-2 ring-ink-950" transition={spring} />
-              )}
-              <span className={`size-7 rounded-full ${accentStyles[a].solid}`} />
-            </button>
-          ))}
+        <div>
+          <span className="mb-1.5 block text-sm font-semibold text-ink-700">Color</span>
+          <div className="flex h-12 items-center gap-1">
+            {accents.map((a) => (
+              <button key={a} type="button" onClick={() => setAccent(a)} aria-label={a} aria-pressed={accent === a} className="relative grid size-10 place-items-center">
+                {accent === a && <motion.span layoutId="accent-ring" className="absolute inset-0.5 rounded-xl ring-2 ring-ink-950" transition={spring} />}
+                <span className={`size-6 rotate-45 rounded-lg ${accentStyles[a].solid}`} />
+              </button>
+            ))}
+          </div>
         </div>
-      </Field>
+      </div>
 
       <div>
-        {/* Segmented control */}
-        <div className="inline-flex rounded-xl bg-ink-950/5 p-1">
-          {(
-            [
-              { id: "paste", label: "Paste text", icon: ClipboardPaste },
-              { id: "upload", label: "Upload file", icon: FileUp },
-            ] as const
-          ).map(({ id, label, icon: Icon }) => (
-            <button
-              key={id}
-              type="button"
-              onClick={() => setTab(id)}
-              className={`relative flex h-9 items-center gap-2 rounded-lg px-4 text-sm font-medium transition-colors ${
-                tab === id ? "text-ink-950" : "text-ink-500 hover:text-ink-900"
-              }`}
-            >
-              {tab === id && (
-                <motion.span layoutId="tab-pill" className="absolute inset-0 rounded-lg bg-surface shadow-card" transition={spring} />
-              )}
-              <Icon className="relative size-4" />
-              <span className="relative">{label}</span>
-            </button>
-          ))}
+        <div className="mb-1.5 flex items-end justify-between gap-4">
+          <span className="text-sm font-semibold text-ink-700">Cards</span>
+          <button type="button" onClick={() => fileInput.current?.click()} className="flex items-center gap-1.5 text-sm font-semibold text-honey-600 hover:text-honey-700">
+            <UploadSimpleIcon size={16} weight="bold" /> Upload file
+          </button>
+          <input ref={fileInput} type="file" accept=".txt,.md,.csv,.tsv" className="hidden" onChange={(e) => loadFile(e.target.files?.[0])} />
         </div>
 
-        <div className="mt-3">
-          <AnimatePresence mode="wait" initial={false}>
-            {tab === "paste" ? (
-              <motion.div
-                key="paste"
-                initial={{ opacity: 0, y: 6 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -6 }}
-                transition={{ duration: 0.2, ease }}
-                className="relative"
-              >
-                <textarea
-                  value={text}
-                  onChange={(e) => setText(e.target.value)}
-                  placeholder="Paste your syllabus, notes, or study guide here…"
-                  rows={10}
-                  className="w-full resize-y rounded-2xl border border-line bg-surface p-4 text-sm leading-relaxed outline-none transition placeholder:text-ink-400 focus:border-brand-400 focus:ring-4 focus:ring-brand-100"
-                />
-                <span className="pointer-events-none absolute bottom-4 right-4 text-xs tabular-nums text-ink-400">
-                  {text.length.toLocaleString()} chars
-                </span>
-              </motion.div>
-            ) : (
-              <motion.div
-                key="upload"
-                initial={{ opacity: 0, y: 6 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -6 }}
-                transition={{ duration: 0.2, ease }}
-              >
-                <input
-                  ref={fileInput}
-                  type="file"
-                  accept=".pdf,.txt,.md,.docx"
-                  className="hidden"
-                  onChange={(e) => setFile(e.target.files?.[0] ?? null)}
-                />
-                {file ? (
-                  <div className="flex items-center gap-3 rounded-2xl border border-line bg-surface p-4">
-                    <span className="grid size-10 place-items-center rounded-xl bg-brand-50 text-brand-600">
-                      <FileUp className="size-5" />
-                    </span>
-                    <span className="min-w-0 flex-1">
-                      <span className="block truncate text-sm font-medium">{file.name}</span>
-                      <span className="text-xs text-ink-500">{(file.size / 1024).toFixed(0)} KB</span>
-                    </span>
-                    <button type="button" onClick={() => setFile(null)} aria-label="Remove file" className="grid size-8 place-items-center rounded-lg text-ink-400 hover:bg-canvas hover:text-ink-950">
-                      <X className="size-4" />
-                    </button>
-                  </div>
-                ) : (
-                  <motion.button
-                    type="button"
-                    onClick={() => fileInput.current?.click()}
-                    onDragOver={(e) => {
-                      e.preventDefault();
-                      setDragging(true);
-                    }}
-                    onDragLeave={() => setDragging(false)}
-                    onDrop={(e) => {
-                      e.preventDefault();
-                      setDragging(false);
-                      setFile(e.dataTransfer.files[0] ?? null);
-                    }}
-                    animate={{ scale: dragging ? 1.02 : 1 }}
-                    transition={spring}
-                    className={`flex w-full flex-col items-center gap-3 rounded-2xl border-2 border-dashed px-6 py-14 text-center transition-colors ${
-                      dragging ? "border-brand-500 bg-brand-50" : "border-ink-300/70 bg-surface hover:border-brand-300"
-                    }`}
-                  >
-                    <motion.span
-                      animate={{ y: dragging ? -4 : 0 }}
-                      className="grid size-12 place-items-center rounded-xl bg-brand-50 text-brand-600"
-                    >
-                      <Upload className="size-5" />
-                    </motion.span>
-                    <span className="text-sm font-semibold">Drop a file or click to browse</span>
-                    <span className="text-xs text-ink-500">PDF, Word, or text</span>
-                  </motion.button>
-                )}
-              </motion.div>
-            )}
-          </AnimatePresence>
-        </div>
+        <motion.div
+          animate={{ scale: dragging ? 1.01 : 1 }}
+          transition={spring}
+          onDragOver={(e) => {
+            e.preventDefault();
+            setDragging(true);
+          }}
+          onDragLeave={() => setDragging(false)}
+          onDrop={(e) => {
+            e.preventDefault();
+            setDragging(false);
+            loadFile(e.dataTransfer.files[0]);
+          }}
+          className={`relative rounded-card border-2 transition-colors ${dragging ? "border-dashed border-honey-400 bg-honey-50" : "border-transparent"}`}
+        >
+          {fileName && (
+            <span className="absolute right-3 top-3 z-10 flex items-center gap-1 rounded-full bg-honey-50 py-1 pl-3 pr-1 text-xs font-semibold text-honey-600">
+              {fileName}
+              <button type="button" aria-label="Clear" onClick={() => { setFileName(null); setText(""); }} className="grid size-5 place-items-center rounded-full hover:bg-honey-100">
+                <XIcon size={12} weight="bold" />
+              </button>
+            </span>
+          )}
+          <textarea
+            value={text}
+            onChange={(e) => setText(e.target.value)}
+            placeholder={`One card per line, or drop a file here:\n\n${example}`}
+            rows={10}
+            className="block w-full resize-y rounded-card border border-line bg-surface p-4 font-mono text-[13px] leading-relaxed outline-none transition placeholder:font-sans placeholder:text-ink-400 focus:border-honey-400 focus:ring-4 focus:ring-honey-400/15"
+          />
+        </motion.div>
+        <p className="mt-2 flex items-center gap-1.5 text-xs text-ink-500">
+          <ClipboardTextIcon size={14} weight="duotone" />
+          Split term and definition with a dash, colon, tab, or =. You can also add cards later.
+        </p>
       </div>
 
-      <button
-        type="button"
-        role="switch"
-        aria-checked={useAI}
-        onClick={() => setUseAI((v) => !v)}
-        className="flex w-full items-center gap-4 rounded-2xl border border-line bg-surface p-4 text-left transition hover:border-ink-300"
-      >
-        <span className="grid size-10 place-items-center rounded-xl bg-honey-50 text-honey-600">
-          <Sparkles className="size-5" />
-        </span>
-        <span className="flex-1">
-          <span className="block text-sm font-semibold">Make flashcards for me</span>
-          <span className="text-xs text-ink-500">Uses AI to pull out the key stuff.</span>
-        </span>
-        <span className={`flex h-7 w-12 items-center rounded-full p-1 transition-colors ${useAI ? "justify-end bg-brand-600" : "justify-start bg-ink-300"}`}>
-          <motion.span layout transition={spring} className="size-5 rounded-full bg-white shadow" />
-        </span>
-      </button>
+      {/* Live preview of what we'll create */}
+      <AnimatePresence>
+        {cards.length > 0 && (
+          <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }} transition={{ duration: 0.3, ease }} className="overflow-hidden">
+            <p className="mb-2 text-sm font-semibold text-ink-700">
+              Preview · <span className="text-honey-600">{cards.length} cards</span>
+            </p>
+            <div className="flex snap-x gap-3 overflow-x-auto pb-2">
+              {cards.slice(0, 12).map((c, i) => (
+                <motion.div
+                  key={`${i}-${c.front}`}
+                  initial={{ opacity: 0, scale: 0.8, y: 10 }}
+                  animate={{ opacity: 1, scale: 1, y: 0 }}
+                  transition={{ ...spring, delay: Math.min(i, 6) * 0.03 }}
+                  className={`${cardClass} w-48 shrink-0 snap-start p-4`}
+                >
+                  <p className="line-clamp-2 text-sm font-semibold">{c.front}</p>
+                  <p className="mt-2 line-clamp-2 text-xs text-ink-500">{c.back}</p>
+                </motion.div>
+              ))}
+              {cards.length > 12 && <div className="grid w-24 shrink-0 place-items-center text-sm font-semibold text-ink-400">+{cards.length - 12}</div>}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
-      <button type="submit" disabled={!canSubmit} className={buttonClass("primary", "h-12 w-full text-base")}>
-        {status === "saving" ? (
+      {error && <p className="rounded-xl bg-rose-50 px-3 py-2 text-sm font-medium text-rose-600">{error}</p>}
+
+      <button type="submit" disabled={pending || !title.trim()} className={buttonClass("primary", "h-12 w-full text-base")}>
+        {pending ? (
           <>
-            <Loader2 className="size-4 animate-spin" /> Working on it…
+            <Bee className="size-6" hover /> Saving…
           </>
+        ) : cards.length ? (
+          `Create set with ${cards.length} cards`
         ) : (
-          "Create study set"
+          "Create empty set"
         )}
       </button>
     </form>
@@ -239,7 +165,7 @@ export function NewSetForm() {
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <label className="block">
-      <span className="mb-1.5 block text-sm font-medium text-ink-700">{label}</span>
+      <span className="mb-1.5 block text-sm font-semibold text-ink-700">{label}</span>
       {children}
     </label>
   );

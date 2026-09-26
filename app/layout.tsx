@@ -1,39 +1,45 @@
 import type { Metadata, Viewport } from "next";
-import { Bricolage_Grotesque, Geist, Geist_Mono } from "next/font/google";
+import { Fredoka, Montserrat } from "next/font/google";
+import { BeeBackground } from "@/components/bee-background";
 import "./globals.css";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+// Body / UI text
+const montserrat = Montserrat({
+  variable: "--font-montserrat",
   subsets: ["latin"],
 });
 
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
-
-// Headings only: modern, with just a little personality.
-const bricolage = Bricolage_Grotesque({
-  variable: "--font-bricolage",
+// Headings: rounded and friendly, still clean
+const fredoka = Fredoka({
+  variable: "--font-fredoka",
   subsets: ["latin"],
 });
 
 export const metadata: Metadata = {
   title: "Study Bee",
-  description: "Paste your syllabus, study it your way.",
 };
 
 export const viewport: Viewport = {
-  themeColor: "#f6f5fb",
+  themeColor: "#110f0b",
 };
+
+// Runs before paint so light-mode users don't see a dark flash.
+const themeScript = `try{if(localStorage.getItem("theme")==="light")document.documentElement.classList.add("light")}catch(e){}`;
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html
       lang="en"
-      className={`${geistSans.variable} ${geistMono.variable} ${bricolage.variable} h-full antialiased`}
+      suppressHydrationWarning
+      className={`${montserrat.variable} ${fredoka.variable} h-full antialiased`}
     >
-      <body className="min-h-full font-sans">{children}</body>
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: themeScript }} />
+      </head>
+      <body className="min-h-full font-sans">
+        <BeeBackground />
+        <div className="relative">{children}</div>
+      </body>
     </html>
   );
 }

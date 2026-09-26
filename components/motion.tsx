@@ -42,7 +42,7 @@ export function ProgressRing({
   value,
   size = 48,
   stroke = 5,
-  className = "stroke-brand-500",
+  className = "stroke-honey-400",
   children,
 }: {
   value: number;
@@ -55,30 +55,33 @@ export function ProgressRing({
   return (
     <div className="relative grid place-items-center" style={{ width: size, height: size }}>
       <svg width={size} height={size} className="-rotate-90">
-        <circle cx={size / 2} cy={size / 2} r={r} fill="none" strokeWidth={stroke} className="stroke-ink-950/[0.07]" />
-        <motion.circle
-          cx={size / 2}
-          cy={size / 2}
-          r={r}
-          fill="none"
-          strokeWidth={stroke}
-          strokeLinecap="round"
-          className={className}
-          initial={{ pathLength: 0 }}
-          animate={{ pathLength: value / 100 }}
-          transition={{ duration: 1.2, ease, delay: 0.2 }}
-        />
+        <circle cx={size / 2} cy={size / 2} r={r} fill="none" strokeWidth={stroke} className="stroke-ink-950/[0.08]" />
+        {value > 0 && (
+          <motion.circle
+            cx={size / 2}
+            cy={size / 2}
+            r={r}
+            fill="none"
+            strokeWidth={stroke}
+            strokeLinecap="round"
+            className={className}
+            initial={{ pathLength: 0 }}
+            animate={{ pathLength: value / 100 }}
+            transition={{ duration: 1.2, ease, delay: 0.2 }}
+          />
+        )}
       </svg>
       <div className="absolute inset-0 grid place-items-center">{children}</div>
     </div>
   );
 }
 
-export function ProgressBar({ value, className = "bg-brand-500" }: { value: number; className?: string }) {
+// Honey-filled bar with a soft shimmer running through it.
+export function ProgressBar({ value, className = "bg-honey-400" }: { value: number; className?: string }) {
   return (
-    <div className="h-2 w-full overflow-hidden rounded-full bg-ink-950/[0.07]">
+    <div className="h-2.5 w-full overflow-hidden rounded-full bg-ink-950/[0.08]">
       <motion.div
-        className={`h-full rounded-full ${className}`}
+        className={`honey-shimmer h-full rounded-full ${className}`}
         initial={{ width: 0 }}
         animate={{ width: `${value}%` }}
         transition={{ duration: 0.9, ease }}

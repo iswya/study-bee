@@ -1,14 +1,10 @@
 import { notFound, redirect } from "next/navigation";
 import { Flashcards } from "@/components/flashcards";
-import { getStudySet, studySets } from "@/lib/demo-data";
+import { getSet } from "@/lib/data";
 
-export function generateStaticParams() {
-  return studySets.map((s) => ({ id: s.id }));
-}
-
-export default async function FlashcardsPage({ params }: { params: Promise<{ id: string }> }) {
+export default async function FlashcardsPage({ params }: PageProps<"/sets/[id]/flashcards">) {
   const { id } = await params;
-  const set = getStudySet(id);
+  const set = await getSet(id);
   if (!set) notFound();
   if (set.cards.length === 0) redirect(`/sets/${id}`);
 

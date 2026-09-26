@@ -29,7 +29,21 @@ export async function updateSession(request: NextRequest) {
 
   // Don't put code between createServerClient and getClaims(); it can
   // cause users to be randomly logged out.
-  await supabase.auth.getClaims();
+  const { data } = await supabase.auth.getClaims();
+  const signedIn = Boolean(data?.claims);
+  const path = request.nextUrl.pathname;
+  const isPublic = path.startsWith("/login") || path.startsWith("/auth");
+
+  // Logged out → login page. Logged in → skip the login page.
+  if (signedIn === isPublic && !path.startsWith("/auth")) {
+    const url = request.nextUrl.clone();
+    url.pathname = signedIn ? "/" : "/login";
+    url.search = "";
+    const redirect = NextResponse.redirect(url);
+    // Keep any refreshed session cookies.
+    response.cookies.getAll().forEach((c) => redirect.cookies.set(c));
+    return redirect;
+  }
 
   return response;
 }
