@@ -21,6 +21,8 @@ export const metadata: Metadata = {
 
 export const viewport: Viewport = {
   themeColor: "#110f0b",
+  // Keyboard overlays the page instead of shrinking it (stops layout jumps on Android).
+  interactiveWidget: "resizes-visual",
 };
 
 // Runs before paint so light-mode users don't see a dark flash.

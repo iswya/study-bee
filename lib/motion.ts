@@ -19,3 +19,12 @@ export const fadeUp: Variants = {
 // Hover / press feel for anything clickable that's card-shaped.
 export const liftHover = { y: -3, transition: spring };
 export const pressTap = { scale: 0.97 };
+
+// True when Space/Enter will already "click" the focused element, so global
+// keyboard shortcuts should stay out of the way (avoids double actions).
+export function keyHandledByFocus(e: KeyboardEvent) {
+  const el = e.target as HTMLElement | null;
+  if (!el) return false;
+  if (el.isContentEditable || ["INPUT", "TEXTAREA", "SELECT"].includes(el.tagName)) return true;
+  return (e.key === " " || e.key === "Enter") && (el.tagName === "BUTTON" || el.tagName === "A");
+}

@@ -13,7 +13,7 @@ import {
 } from "motion/react";
 import { useCallback, useEffect, useState } from "react";
 import type { Card } from "@/lib/types";
-import { spring } from "@/lib/motion";
+import { keyHandledByFocus, spring } from "@/lib/motion";
 import { useSessionSaver } from "@/lib/use-session-saver";
 import { Results } from "./results";
 import { StudyHeader } from "./study-header";
@@ -47,7 +47,7 @@ export function Flashcards({ setId, title, cards }: { setId: string; title: stri
 
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
-      if (finished || e.repeat) return;
+      if (finished || e.repeat || keyHandledByFocus(e)) return;
       if (e.key === " " || e.key === "Enter" || e.key === "ArrowUp" || e.key === "ArrowDown") {
         e.preventDefault();
         flip();

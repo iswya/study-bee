@@ -31,16 +31,15 @@ export function BeeLoader() {
           />
         </svg>
         {[0, 1, 2].map((i) => (
-          <motion.div
+          <div
             key={i}
-            className="absolute left-1/2 top-1/2"
-            animate={{ rotate: 360 }}
-            transition={{ duration: 3 + i * 0.7, repeat: Infinity, ease: "linear", delay: -i * 1.1 }}
+            className="absolute left-1/2 top-1/2 animate-spin"
+            style={{ animationDuration: `${3 + i * 0.7}s`, animationDelay: `-${i * 1.1}s` }}
           >
             <div style={{ transform: `translate(-12px, ${-44 - i * 6}px)` }}>
               <Bee className="size-6" />
             </div>
-          </motion.div>
+          </div>
         ))}
       </div>
       <AnimatePresence mode="wait">

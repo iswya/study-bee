@@ -68,9 +68,9 @@ export function LeaderboardView({ rows, period, hidden }: { rows: LeaderboardRow
                 <Link href={`/u/${row.username}`} className={`group flex min-w-0 max-w-full flex-col items-center ${pressable}`}>
                   <div className="relative">
                     {place === 1 && (
-                      <motion.div className="absolute -top-7 left-1/2 -ml-4" animate={{ y: [0, -4, 0], rotate: [-6, 6, -6] }} transition={{ duration: 2.2, repeat: Infinity }}>
-                        <Bee className="size-8" />
-                      </motion.div>
+                      <div className="absolute -top-7 left-1/2 -ml-4">
+                        <Bee className="size-8" hover />
+                      </div>
                     )}
                     <Avatar user={row} size={place === 1 ? "lg" : "md"} online={row.online} className={`transition-transform group-hover:-translate-y-1 ${place === 1 ? "" : "sm:scale-125"}`} />
                     <span className={`absolute -left-2 -top-2 grid size-7 place-items-center rounded-lg bg-linear-to-br font-display text-sm font-bold text-honey-ink shadow-card ring-2 ring-canvas ${medal}`}>

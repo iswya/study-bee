@@ -33,15 +33,11 @@ export function LoginForm({ confirmFailed }: { confirmFailed: boolean }) {
         <div className="relative">
           <LogoMark className="size-16" />
           {/* A bee keeps circling the logo */}
-          <motion.div
-            className="absolute left-1/2 top-1/2"
-            animate={{ rotate: 360 }}
-            transition={{ duration: 6, repeat: Infinity, ease: "linear" }}
-          >
+          <div className="absolute left-1/2 top-1/2 animate-[spin_6s_linear_infinite]">
             <div className="-translate-x-3 -translate-y-[52px]">
               <Bee className="size-6" />
             </div>
-          </motion.div>
+          </div>
         </div>
         <h1 className="mt-10 font-display text-3xl font-semibold">
           study<span className="text-honey-400">bee</span>
@@ -71,19 +67,28 @@ export function LoginForm({ confirmFailed }: { confirmFailed: boolean }) {
         </div>
 
         <form action={mode === "in" ? inAction : upAction} className="mt-5 space-y-3">
-          <AnimatePresence initial={false}>
-            {mode === "up" && (
-              <motion.div
-                initial={{ height: 0, opacity: 0 }}
-                animate={{ height: "auto", opacity: 1 }}
-                exit={{ height: 0, opacity: 0 }}
-                transition={{ duration: 0.25 }}
-                className="overflow-hidden"
-              >
-                <Field icon={UserIcon} name="name" placeholder="Username" autoComplete="username" autoCapitalize="none" pattern="[A-Za-z0-9_]{3,20}" title="3–20 letters, numbers, or _" required />
-              </motion.div>
-            )}
-          </AnimatePresence>
+          {/* Username slides open with a CSS grid-rows transition — the browser
+              handles it natively, no per-frame JS layout work. */}
+          <div
+            className={`grid transition-[grid-template-rows,opacity] duration-300 ease-out ${
+              mode === "up" ? "grid-rows-[1fr] opacity-100" : "-mb-3 grid-rows-[0fr] opacity-0"
+            }`}
+            aria-hidden={mode !== "up"}
+          >
+            <div className="min-h-0 overflow-hidden">
+              <Field
+                icon={UserIcon}
+                name="name"
+                placeholder="Username"
+                autoComplete="username"
+                autoCapitalize="none"
+                pattern="[A-Za-z0-9_]{3,20}"
+                title="3–20 letters, numbers, or _"
+                required={mode === "up"}
+                disabled={mode !== "up"}
+              />
+            </div>
+          </div>
           <Field icon={EnvelopeSimpleIcon} name="email" type="email" placeholder="Email" autoComplete="email" required />
           <div className="relative">
             <Field

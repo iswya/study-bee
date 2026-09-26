@@ -4,7 +4,7 @@ import { ArrowCounterClockwiseIcon, ArrowLeftIcon, ArrowRightIcon, CardsThreeIco
 import { AnimatePresence, motion } from "motion/react";
 import { useEffect, useMemo, useState } from "react";
 import type { Card } from "@/lib/types";
-import { ease, spring } from "@/lib/motion";
+import { ease, keyHandledByFocus, spring } from "@/lib/motion";
 import { useSessionSaver } from "@/lib/use-session-saver";
 import { Results } from "./results";
 import { StudyHeader } from "./study-header";
@@ -64,7 +64,7 @@ export function Quiz({ setId, title, cards }: { setId: string; title: string; ca
 
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
-      if (finished) return;
+      if (finished || e.repeat || keyHandledByFocus(e)) return;
       const n = Number(e.key);
       if (!answered && n >= 1 && n <= q.options.length) pick(q.options[n - 1].id);
       if (answered && (e.key === "Enter" || e.key === " ")) {
