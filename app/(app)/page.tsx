@@ -4,10 +4,12 @@ import { Bee } from "@/components/bee";
 import { AnimatedNumber, Item, Stagger } from "@/components/motion";
 import { NewSetCard, SetCard } from "@/components/set-card";
 import { buttonClass, pressable, SectionTitle } from "@/components/ui";
-import { getSets, getStats } from "@/lib/data";
+import { getLeaderboard, getSets, getStats } from "@/lib/data";
+import { Avatar } from "@/components/avatar";
 
 export default async function Home() {
-  const [sets, stats] = await Promise.all([getSets(), getStats()]);
+  const [sets, stats, board] = await Promise.all([getSets(), getStats(), getLeaderboard("week")]);
+  const online = board.filter((r) => r.online && !r.is_me);
 
   if (sets.length === 0) return <Empty />;
 
@@ -20,6 +22,19 @@ export default async function Home() {
   return (
     <div className="mx-auto max-w-6xl px-4 py-6 sm:px-8 md:py-10">
       <Stagger>
+        {online.length > 0 && (
+          <Item className="mb-6 flex items-center gap-3 overflow-x-auto pb-1">
+            <span className="flex shrink-0 items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-mint-600">
+              <span className="size-2 animate-pulse rounded-full bg-mint-500" /> Online now
+            </span>
+            {online.map((u) => (
+              <Link key={u.username} href={`/u/${u.username}`} className={`flex shrink-0 items-center gap-2 rounded-full border border-line bg-surface py-1 pl-1 pr-3 text-sm font-semibold hover:border-honey-400/60 ${pressable}`}>
+                <Avatar user={u} size="sm" online className="[&>span:first-child]:size-7 [&>span:first-child]:rounded-full [&>span:first-child]:text-base" />
+                {u.username}
+              </Link>
+            ))}
+          </Item>
+        )}
         <Item className="grid grid-cols-3 gap-3 sm:gap-4">
           <Stat icon={<CheckCircleIcon size={20} weight="duotone" />} tone="bg-mint-50 text-mint-600" label="Cards known">
             <AnimatedNumber value={known} />

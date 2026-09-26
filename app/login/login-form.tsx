@@ -80,7 +80,7 @@ export function LoginForm({ confirmFailed }: { confirmFailed: boolean }) {
                 transition={{ duration: 0.25 }}
                 className="overflow-hidden"
               >
-                <Field icon={UserIcon} name="name" placeholder="Name" autoComplete="nickname" required />
+                <Field icon={UserIcon} name="name" placeholder="Username" autoComplete="username" autoCapitalize="none" pattern="[A-Za-z0-9_]{3,20}" title="3–20 letters, numbers, or _" required />
               </motion.div>
             )}
           </AnimatePresence>

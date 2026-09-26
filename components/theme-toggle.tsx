@@ -13,16 +13,20 @@ function subscribe(onChange: () => void) {
 
 const isLight = () => document.documentElement.classList.contains("light");
 
-export function ThemeToggle({ className = "" }: { className?: string }) {
+export function useTheme() {
   const light = useSyncExternalStore(subscribe, isLight, () => false);
-
-  function toggle() {
-    const next = !light;
+  function setLight(next: boolean) {
     document.documentElement.classList.toggle("light", next);
     try {
       localStorage.setItem("theme", next ? "light" : "dark");
     } catch {}
   }
+  return { light, setLight };
+}
+
+export function ThemeToggle({ className = "" }: { className?: string }) {
+  const { light, setLight } = useTheme();
+  const toggle = () => setLight(!light);
 
   return (
     <button

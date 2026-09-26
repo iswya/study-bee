@@ -1,14 +1,15 @@
 "use client";
 
-import { CheckCircleIcon, PlusIcon, SpinnerGapIcon, TrashIcon } from "@phosphor-icons/react";
+import { CheckCircleIcon, CopyIcon, PlusIcon, SpinnerGapIcon, TrashIcon } from "@phosphor-icons/react";
 import { AnimatePresence, motion } from "motion/react";
 import { useActionState, useRef, useState, useTransition } from "react";
 import { buttonClass, cardClass, inputClass, pressable } from "@/components/ui";
 import { addCard, deleteCard, deleteSet } from "@/lib/actions";
+import { copySet } from "@/lib/social-actions";
 import type { Card } from "@/lib/types";
 import { spring } from "@/lib/motion";
 
-export function CardManager({ setId, cards }: { setId: string; cards: Card[] }) {
+export function CardManager({ setId, cards, readOnly = false }: { setId: string; cards: Card[]; readOnly?: boolean }) {
   const formRef = useRef<HTMLFormElement>(null);
   const frontRef = useRef<HTMLInputElement>(null);
   const [state, action, pending] = useActionState(async (_: unknown, form: FormData) => {
@@ -22,21 +23,23 @@ export function CardManager({ setId, cards }: { setId: string; cards: Card[] }) 
 
   return (
     <div className="space-y-3">
-      <form ref={formRef} action={action} className={`${cardClass} grid gap-2 p-3 sm:grid-cols-[1fr_1fr_auto]`}>
-        <input ref={frontRef} name="front" placeholder="Term / question" className={inputClass} required />
-        <input name="back" placeholder="Definition / answer" className={inputClass} required />
-        <button disabled={pending} className={buttonClass("primary", "h-12")}>
-          {pending ? <SpinnerGapIcon size={18} weight="bold" className="animate-spin" /> : <PlusIcon size={18} weight="bold" />}
-          Add
-        </button>
-        {state?.error && <p className="text-sm text-rose-600 sm:col-span-3">{state.error}</p>}
-      </form>
+      {!readOnly && (
+        <form ref={formRef} action={action} className={`${cardClass} grid gap-2 p-3 sm:grid-cols-[1fr_1fr_auto]`}>
+          <input ref={frontRef} name="front" placeholder="Term / question" className={inputClass} required />
+          <input name="back" placeholder="Definition / answer" className={inputClass} required />
+          <button disabled={pending} className={buttonClass("primary", "h-12")}>
+            {pending ? <SpinnerGapIcon size={18} weight="bold" className="animate-spin" /> : <PlusIcon size={18} weight="bold" />}
+            Add
+          </button>
+          {state?.error && <p className="text-sm text-rose-600 sm:col-span-3">{state.error}</p>}
+        </form>
+      )}
 
       {cards.length > 0 && (
         <ul className={`${cardClass} divide-y divide-line overflow-hidden`}>
           <AnimatePresence initial={false}>
             {cards.map((card, i) => (
-              <CardRow key={card.id} setId={setId} card={card} index={i} />
+              <CardRow key={card.id} setId={setId} card={card} index={i} readOnly={readOnly} />
             ))}
           </AnimatePresence>
         </ul>
@@ -45,7 +48,7 @@ export function CardManager({ setId, cards }: { setId: string; cards: Card[] }) 
   );
 }
 
-function CardRow({ setId, card, index }: { setId: string; card: Card; index: number }) {
+function CardRow({ setId, card, index, readOnly }: { setId: string; card: Card; index: number; readOnly: boolean }) {
   const [pending, startTransition] = useTransition();
   return (
     <motion.li
@@ -62,13 +65,15 @@ function CardRow({ setId, card, index }: { setId: string; card: Card; index: num
         </span>
         <p className="font-semibold">{card.front}</p>
         <p className="col-start-2 text-ink-500 sm:col-start-auto">{card.back}</p>
-        <button
-          onClick={() => startTransition(() => deleteCard(setId, card.id))}
-          aria-label="Delete card"
-          className={`col-start-3 row-start-1 grid size-8 place-items-center rounded-lg text-ink-400 hover:bg-rose-50 hover:text-rose-600 sm:col-start-4 sm:opacity-0 sm:group-hover:opacity-100 sm:focus:opacity-100 ${pressable}`}
-        >
-          <TrashIcon size={16} weight="duotone" />
-        </button>
+        {!readOnly && (
+          <button
+            onClick={() => startTransition(() => deleteCard(setId, card.id))}
+            aria-label="Delete card"
+            className={`col-start-3 row-start-1 grid size-8 place-items-center rounded-lg text-ink-400 hover:bg-rose-50 hover:text-rose-600 sm:col-start-4 sm:opacity-0 sm:group-hover:opacity-100 sm:focus:opacity-100 ${pressable}`}
+          >
+            <TrashIcon size={16} weight="duotone" />
+          </button>
+        )}
       </div>
     </motion.li>
   );
@@ -100,6 +105,29 @@ export function DeleteSetButton({ setId }: { setId: string }) {
       >
         <TrashIcon size={16} weight="duotone" />
         {confirming ? "Delete for real" : "Delete set"}
+      </button>
+    </div>
+  );
+}
+
+export function CopySetButton({ setId }: { setId: string }) {
+  const [pending, startTransition] = useTransition();
+  const [error, setError] = useState<string | null>(null);
+  return (
+    <div className="flex items-center gap-2">
+      {error && <span className="text-xs text-rose-600">{error}</span>}
+      <button
+        onClick={() =>
+          startTransition(async () => {
+            const result = await copySet(setId);
+            if (result?.error) setError(result.error);
+          })
+        }
+        disabled={pending}
+        className={buttonClass("primary", "h-10")}
+      >
+        {pending ? <SpinnerGapIcon size={16} weight="bold" className="animate-spin" /> : <CopyIcon size={16} weight="bold" />}
+        Copy to my library
       </button>
     </div>
   );

@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { USERNAME_RE } from "@/lib/types";
 
 export type AuthState = { error?: string; message?: string } | undefined;
 
@@ -24,9 +25,9 @@ export async function signIn(_: AuthState, form: FormData): Promise<AuthState> {
 }
 
 export async function signUp(_: AuthState, form: FormData): Promise<AuthState> {
-  const name = read(form, "name");
+  const name = read(form, "name").toLowerCase();
   const password = String(form.get("password") ?? "");
-  if (!name) return { error: "Add a name so your friends know it's you." };
+  if (!USERNAME_RE.test(name)) return { error: "Username: 3–20 letters, numbers, or _." };
   if (password.length < 6) return { error: "Password needs at least 6 characters." };
 
   const origin = (await headers()).get("origin") ?? "";

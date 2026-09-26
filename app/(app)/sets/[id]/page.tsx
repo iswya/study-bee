@@ -1,12 +1,13 @@
 import { ArrowLeftIcon, CalendarBlankIcon, CardsThreeIcon, CaretRightIcon, ExamIcon, LightningIcon, PathIcon, StackIcon, TagIcon } from "@phosphor-icons/react/ssr";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { Avatar } from "@/components/avatar";
 import { LearningPath } from "@/components/learning-path";
 import { Item, ProgressBar, Stagger } from "@/components/motion";
-import { buttonClass, cardLinkClass, SectionTitle, Tag } from "@/components/ui";
+import { buttonClass, cardClass, cardLinkClass, pressable, SectionTitle, Tag } from "@/components/ui";
 import { getSet } from "@/lib/data";
 import { accentStyles, formatDate } from "@/lib/types";
-import { CardManager, DeleteSetButton } from "./set-controls";
+import { CardManager, CopySetButton, DeleteSetButton } from "./set-controls";
 
 export default async function StudySetPage({ params }: PageProps<"/sets/[id]">) {
   const { id } = await params;
@@ -15,16 +16,29 @@ export default async function StudySetPage({ params }: PageProps<"/sets/[id]">) 
 
   const a = accentStyles[set.accent];
   const hasCards = set.cards.length > 0;
+  const mine = set.isMine;
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-6 sm:px-8 md:py-10">
       <Stagger>
-        <Item className="flex items-center justify-between">
-          <Link href="/" className={buttonClass("ghost", "-ml-3 h-9 px-3")}>
-            <ArrowLeftIcon size={16} weight="bold" /> Home
+        <Item className="flex items-center justify-between gap-3">
+          <Link href={mine || !set.owner ? "/" : `/u/${set.owner.username}`} className={buttonClass("ghost", "-ml-3 h-9 px-3")}>
+            <ArrowLeftIcon size={16} weight="bold" /> {mine || !set.owner ? "Home" : set.owner.username}
           </Link>
-          <DeleteSetButton setId={set.id} />
+          {mine ? <DeleteSetButton setId={set.id} /> : <CopySetButton setId={set.id} />}
         </Item>
+
+        {!mine && set.owner && (
+          <Item className="mt-4">
+            <Link href={`/u/${set.owner.username}`} className={`inline-flex items-center gap-2.5 rounded-2xl border border-line bg-surface py-1.5 pl-1.5 pr-4 hover:border-honey-400/60 ${pressable}`}>
+              <Avatar user={set.owner} size="sm" />
+              <span className="text-sm">
+                <span className="text-ink-500">Shared by </span>
+                <span className="font-semibold">{set.owner.username}</span>
+              </span>
+            </Link>
+          </Item>
+        )}
 
         <Item className="mt-5 flex flex-wrap items-center gap-2">
           {set.subject && (
@@ -42,10 +56,12 @@ export default async function StudySetPage({ params }: PageProps<"/sets/[id]">) 
         </Item>
 
         {hasCards && (
-          <Item className="mt-6 max-w-xl rounded-card border border-line bg-surface p-5 shadow-card">
+          <Item className={`${cardClass} mt-6 max-w-xl p-5`}>
             <div className="mb-3 flex items-baseline justify-between text-sm">
               <span className="font-semibold text-ink-700">
-                {set.knownCount} / {set.cardCount} known
+                {mine ? "" : `${set.owner?.username ?? "They"} know `}
+                {set.knownCount} / {set.cardCount}
+                {mine ? " known" : ""}
               </span>
               <span className="font-display text-xl font-semibold tabular-nums">{set.progress}%</span>
             </div>
@@ -54,9 +70,9 @@ export default async function StudySetPage({ params }: PageProps<"/sets/[id]">) 
         )}
       </Stagger>
 
-      <div className={`mt-10 grid gap-10 ${hasCards ? "lg:grid-cols-[1fr_340px]" : ""}`}>
+      <div className={`mt-10 grid gap-10 ${hasCards && mine ? "lg:grid-cols-[1fr_340px]" : ""}`}>
         <div>
-          {hasCards && (
+          {hasCards && mine && (
             <div className="mb-10">
               <SectionTitle icon={<LightningIcon size={22} weight="fill" />}>Study</SectionTitle>
               <Stagger className="grid gap-3 sm:grid-cols-2">
@@ -68,11 +84,11 @@ export default async function StudySetPage({ params }: PageProps<"/sets/[id]">) 
 
           <div id="cards" className="scroll-mt-8">
             <SectionTitle icon={<StackIcon size={22} weight="fill" />}>Cards · {set.cards.length}</SectionTitle>
-            <CardManager setId={set.id} cards={set.cards} />
+            <CardManager setId={set.id} cards={set.cards} readOnly={!mine} />
           </div>
         </div>
 
-        {hasCards && (
+        {hasCards && mine && (
           <aside className="lg:sticky lg:top-8 lg:self-start">
             <SectionTitle icon={<PathIcon size={22} weight="bold" />}>Path</SectionTitle>
             <div className="overflow-hidden rounded-card border border-line bg-surface py-4 shadow-card">
@@ -88,10 +104,7 @@ export default async function StudySetPage({ params }: PageProps<"/sets/[id]">) 
 function Mode({ href, icon, tone, title, blurb }: { href: string; icon: React.ReactNode; tone: string; title: string; blurb: string }) {
   return (
     <Item>
-      <Link
-        href={href}
-        className={`group flex items-center gap-4 p-4 ${cardLinkClass}`}
-      >
+      <Link href={href} className={`group flex items-center gap-4 p-4 ${cardLinkClass}`}>
         <span className={`grid size-12 shrink-0 place-items-center rounded-2xl transition-transform duration-300 group-hover:-rotate-6 group-hover:scale-110 ${tone}`}>
           {icon}
         </span>

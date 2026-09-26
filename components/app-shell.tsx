@@ -1,15 +1,16 @@
 "use client";
 
-import { BooksIcon, HouseIcon, PlusIcon, SignOutIcon, type Icon } from "@phosphor-icons/react";
+import { BooksIcon, GearSixIcon, HouseIcon, PlusIcon, SignOutIcon, TrophyIcon, UserIcon, type Icon } from "@phosphor-icons/react";
 import { motion, MotionConfig } from "motion/react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import type { ReactNode } from "react";
 import { signOut } from "@/app/login/actions";
-import { accentStyles, type Accent } from "@/lib/types";
+import { accentStyles, type Accent, type AvatarInfo } from "@/lib/types";
 import { spring } from "@/lib/motion";
+import { Avatar } from "./avatar";
 import { Logo } from "./logo";
-import { ThemeToggle } from "./theme-toggle";
+import { Presence } from "./presence";
 import { buttonClass, iconButtonClass, pressable } from "./ui";
 
 type RecentSet = { id: string; title: string; accent: Accent };
@@ -17,40 +18,34 @@ type RecentSet = { id: string; title: string; accent: Accent };
 const nav: { href: string; label: string; icon: Icon }[] = [
   { href: "/", label: "Home", icon: HouseIcon },
   { href: "/library", label: "Library", icon: BooksIcon },
+  { href: "/leaderboard", label: "Leaderboard", icon: TrophyIcon },
 ];
 
 function isActive(pathname: string, href: string) {
   return href === "/" ? pathname === "/" : pathname.startsWith(href);
 }
 
-export function AppShell({
-  children,
-  userName,
-  recent,
-}: {
-  children: ReactNode;
-  userName: string;
-  recent: RecentSet[];
-}) {
+export function AppShell({ children, me, recent }: { children: ReactNode; me: AvatarInfo; recent: RecentSet[] }) {
   const pathname = usePathname();
   // Focus mode: hide the chrome while actually studying.
   const studying = /\/sets\/[^/]+\/(flashcards|quiz)/.test(pathname);
 
   return (
     <MotionConfig reducedMotion="user">
+      <Presence />
       <div className="flex min-h-dvh">
-        {!studying && <Sidebar pathname={pathname} userName={userName} recent={recent} />}
+        {!studying && <Sidebar pathname={pathname} me={me} recent={recent} />}
         <div className="min-w-0 flex-1">
           {!studying && <TopBar />}
           <main className={studying ? "" : "pb-28 md:pb-0"}>{children}</main>
         </div>
-        {!studying && <BottomNav pathname={pathname} />}
+        {!studying && <BottomNav pathname={pathname} me={me} />}
       </div>
     </MotionConfig>
   );
 }
 
-function Sidebar({ pathname, userName, recent }: { pathname: string; userName: string; recent: RecentSet[] }) {
+function Sidebar({ pathname, me, recent }: { pathname: string; me: AvatarInfo; recent: RecentSet[] }) {
   return (
     <aside className="sticky top-0 hidden h-dvh w-64 shrink-0 flex-col border-r border-line bg-surface/60 px-4 py-6 backdrop-blur-xl md:flex">
       <div className="px-2">
@@ -84,7 +79,7 @@ function Sidebar({ pathname, userName, recent }: { pathname: string; userName: s
       {recent.length > 0 && (
         <>
           <p className="mt-8 px-3 text-[11px] font-bold uppercase tracking-wider text-ink-400">Recent</p>
-          <div className="mt-2 flex flex-col gap-0.5">
+          <div className="mt-2 flex min-h-0 flex-col gap-0.5 overflow-y-auto">
             {recent.map((set) => {
               const active = pathname.startsWith(`/sets/${set.id}`);
               return (
@@ -104,12 +99,14 @@ function Sidebar({ pathname, userName, recent }: { pathname: string; userName: s
         </>
       )}
 
-      <div className="mt-auto flex items-center gap-2 rounded-2xl border border-line bg-raised p-2">
-        <span className="grid size-9 shrink-0 place-items-center rounded-xl bg-honey-400 font-display text-base font-semibold uppercase text-honey-ink">
-          {userName[0]}
-        </span>
-        <span className="min-w-0 flex-1 truncate text-sm font-semibold">{userName}</span>
-        <ThemeToggle />
+      <div className="mt-auto flex items-center gap-1 rounded-2xl border border-line bg-raised p-1.5">
+        <Link href={`/u/${me.username}`} className={`flex min-w-0 flex-1 items-center gap-2.5 rounded-xl p-1 hover:bg-ink-950/5 ${pressable}`}>
+          <Avatar user={me} size="sm" />
+          <span className="truncate text-sm font-semibold">{me.username}</span>
+        </Link>
+        <Link href="/settings" aria-label="Settings" title="Settings" className={`${iconButtonClass} ${pathname === "/settings" ? "bg-honey-50 text-honey-600" : ""}`}>
+          <GearSixIcon size={20} weight="duotone" className="transition-transform duration-500 hover:rotate-90" />
+        </Link>
         <form action={signOut}>
           <button aria-label="Sign out" title="Sign out" className={iconButtonClass}>
             <SignOutIcon size={20} weight="duotone" />
@@ -122,43 +119,41 @@ function Sidebar({ pathname, userName, recent }: { pathname: string; userName: s
 
 function TopBar() {
   return (
-    <header className="flex items-center justify-between px-4 pt-4 md:hidden">
+    <header className="flex items-center justify-between px-4 pt-[max(1rem,env(safe-area-inset-top))] md:hidden">
       <Logo />
-      <div className="flex items-center">
-        <ThemeToggle />
-        <form action={signOut}>
-          <button aria-label="Sign out" className={iconButtonClass}>
-            <SignOutIcon size={20} weight="duotone" />
-          </button>
-        </form>
-      </div>
+      <Link href="/settings" aria-label="Settings" className={iconButtonClass}>
+        <GearSixIcon size={22} weight="duotone" />
+      </Link>
     </header>
   );
 }
 
-function BottomNav({ pathname }: { pathname: string }) {
+function BottomNav({ pathname, me }: { pathname: string; me: AvatarInfo }) {
+  const profileHref = `/u/${me.username}`;
   return (
-    <div className="fixed inset-x-0 bottom-0 z-40 px-4 pb-[max(1rem,env(safe-area-inset-bottom))] md:hidden">
-      <nav className="mx-auto flex h-16 max-w-sm items-center justify-around rounded-3xl border border-line bg-surface/85 px-2 shadow-lift backdrop-blur-xl">
-        <BottomNavItem {...nav[0]} active={isActive(pathname, nav[0].href)} />
+    <div className="fixed inset-x-0 bottom-0 z-40 px-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] md:hidden">
+      <nav className="mx-auto grid h-16 max-w-md grid-cols-5 items-center rounded-3xl border border-line bg-surface/85 px-1 shadow-lift backdrop-blur-xl">
+        <BottomNavItem href="/" label="Home" icon={HouseIcon} active={isActive(pathname, "/")} />
+        <BottomNavItem href="/library" label="Library" icon={BooksIcon} active={isActive(pathname, "/library")} />
         <Link
           href="/new"
           aria-label="New set"
-          className={`-mt-8 grid size-14 place-items-center rounded-2xl bg-honey-400 text-honey-ink shadow-honey ring-4 ring-canvas ${pressable}`}
+          className={`-mt-8 grid size-14 place-items-center justify-self-center rounded-2xl bg-honey-400 text-honey-ink shadow-honey ring-4 ring-canvas ${pressable}`}
         >
           <PlusIcon size={24} weight="bold" />
         </Link>
-        <BottomNavItem {...nav[1]} active={isActive(pathname, nav[1].href)} />
+        <BottomNavItem href="/leaderboard" label="Board" icon={TrophyIcon} active={isActive(pathname, "/leaderboard")} />
+        <BottomNavItem href={profileHref} label="Me" icon={UserIcon} active={pathname === profileHref} />
       </nav>
     </div>
   );
 }
 
-function BottomNavItem({ href, label, icon: NavIcon, active }: (typeof nav)[number] & { active: boolean }) {
+function BottomNavItem({ href, label, icon: NavIcon, active }: { href: string; label: string; icon: Icon; active: boolean }) {
   return (
     <Link
       href={href}
-      className={`relative flex w-20 flex-col items-center gap-1 py-2 text-[11px] font-semibold ${pressable} ${
+      className={`relative flex flex-col items-center gap-1 py-2 text-[11px] font-semibold ${pressable} ${
         active ? "text-honey-600" : "text-ink-400"
       }`}
     >
