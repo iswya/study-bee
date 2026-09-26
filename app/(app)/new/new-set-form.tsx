@@ -22,7 +22,7 @@ import { BeeLoader } from "@/components/bee-loader";
 import { buttonClass, cardClass, inputClass } from "@/components/ui";
 import { createSet } from "@/lib/actions";
 import { parseCards } from "@/lib/parse-cards";
-import { fileKind, prepareFile } from "@/lib/prepare-file";
+import { ACCEPTED_FILES, fileKind, prepareFile, readDocx } from "@/lib/prepare-file";
 import { accents, accentStyles, type Accent } from "@/lib/types";
 import { ease, spring } from "@/lib/motion";
 
@@ -38,6 +38,7 @@ export function NewSetForm() {
   const [accent, setAccent] = useState<Accent>("honey");
   const [text, setText] = useState("");
   const [uploads, setUploads] = useState<Upload[]>([]);
+  const [readFiles, setReadFiles] = useState<string[]>([]);
   const [dragging, setDragging] = useState(false);
 
   const [count, setCount] = useState<(typeof counts)[number]>("auto");
@@ -59,15 +60,31 @@ export function NewSetForm() {
     setError(null);
     for (const raw of Array.from(list)) {
       const kind = fileKind(raw);
+      if (kind === "old-doc") {
+        setError(`${raw.name} is an old Word file. Open it in Word and use Save As → .docx, then upload that.`);
+        continue;
+      }
       if (kind === "other") {
         setError(`Can't use ${raw.name}. Try PDF, Word (.docx), images, or text files.`);
         continue;
       }
-      if (kind === "text") {
-        // Text files go straight into the box so their lines can become cards.
-        let content = await raw.text();
+      if (kind === "text" || kind === "doc") {
+        // Text and Word files go straight into the box so their lines can
+        // become cards (and the AI can use them too).
+        let content: string;
+        try {
+          content = kind === "doc" ? await readDocx(raw) : await raw.text();
+        } catch {
+          setError(`Couldn't read ${raw.name}. Is it a real Word file?`);
+          continue;
+        }
+        if (!content.trim()) {
+          setError(`${raw.name} doesn't have any text in it.`);
+          continue;
+        }
         if (raw.name.toLowerCase().endsWith(".csv")) content = content.replace(/^([^,\n]+),/gm, "$1\t");
         setText((t) => (t ? `${t}\n${content}` : content));
+        setReadFiles((f) => [...f, raw.name]);
       } else {
         const file = await prepareFile(raw);
         setUploads((u) => [...u, { id: crypto.randomUUID(), file }]);
@@ -167,7 +184,7 @@ export function NewSetForm() {
           ref={fileInput}
           type="file"
           multiple
-          accept=".pdf,.docx,.txt,.md,.csv,.tsv,image/*"
+          accept={ACCEPTED_FILES}
           className="hidden"
           onChange={(e) => {
             addFiles(e.target.files);
@@ -205,6 +222,30 @@ export function NewSetForm() {
           )}
         </AnimatePresence>
         {totalMB > 4 && <p className="mt-2 text-xs font-medium text-rose-600">That&apos;s {totalMB.toFixed(1)} MB — the limit is 4 MB. Remove something or use fewer pages.</p>}
+
+        <AnimatePresence initial={false}>
+          {readFiles.length > 0 && (
+            <motion.p
+              initial={{ opacity: 0, y: -4 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0 }}
+              className="mt-3 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs font-medium text-mint-600"
+            >
+              <FileTextIcon size={14} weight="fill" />
+              Added text from {readFiles.join(", ")}
+              <button
+                type="button"
+                onClick={() => {
+                  setReadFiles([]);
+                  setText("");
+                }}
+                className="font-semibold text-ink-500 underline-offset-2 hover:text-ink-950 hover:underline"
+              >
+                Clear
+              </button>
+            </motion.p>
+          )}
+        </AnimatePresence>
 
         <textarea
           value={text}

@@ -20,11 +20,24 @@ export async function prepareFile(file: File): Promise<File> {
   }
 }
 
+export const DOCX_TYPE = "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
+
+// For <input accept>: extensions for desktop pickers, MIME types for phone pickers.
+export const ACCEPTED_FILES = [".pdf", ".docx", ".txt", ".md", ".csv", ".tsv", "application/pdf", DOCX_TYPE, "text/plain", "image/*"].join(",");
+
 export function fileKind(file: File) {
   const n = file.name.toLowerCase();
   if (file.type === "application/pdf" || n.endsWith(".pdf")) return "pdf";
   if (file.type.startsWith("image/")) return "image";
-  if (n.endsWith(".docx")) return "doc";
+  if (file.type === DOCX_TYPE || n.endsWith(".docx")) return "doc";
+  if (n.endsWith(".doc") || file.type === "application/msword") return "old-doc";
   if (/\.(txt|md|csv|tsv)$/.test(n)) return "text";
   return "other";
+}
+
+// Pulls the plain text out of a Word (.docx) file, in the browser.
+export async function readDocx(file: File) {
+  const mammoth = (await import("mammoth")).default;
+  const { value } = await mammoth.extractRawText({ arrayBuffer: await file.arrayBuffer() });
+  return value.replace(/\n{3,}/g, "\n\n").trim();
 }
