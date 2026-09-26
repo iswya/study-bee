@@ -6,6 +6,7 @@ import Link from "next/link";
 import { accentStyles, type StudySetSummary } from "@/lib/types";
 import { fadeUp, liftHover, pressTap } from "@/lib/motion";
 import { ProgressRing } from "./motion";
+import { glow } from "./ui";
 
 const MotionLink = motion.create(Link);
 
@@ -17,7 +18,7 @@ export function SetCard({ set }: { set: StudySetSummary }) {
       variants={fadeUp}
       whileHover={liftHover}
       whileTap={pressTap}
-      className="group relative flex min-h-48 flex-col overflow-hidden rounded-card border border-line bg-surface p-5 shadow-card transition-[box-shadow,border-color] hover:border-ink-300 hover:shadow-lift"
+      className={`group relative flex min-h-48 flex-col overflow-hidden rounded-card border border-line bg-surface p-5 shadow-card transition-[box-shadow,border-color] duration-300 hover:border-honey-400/70 hover:shadow-lift ${glow}`}
     >
       {/* Hexagon corner that grows on hover */}
       <svg viewBox="0 0 100 100" className={`pointer-events-none absolute -right-8 -top-8 size-32 transition-transform duration-500 group-hover:rotate-12 group-hover:scale-125 ${a.text}`} aria-hidden>
@@ -51,7 +52,7 @@ export function NewSetCard() {
       variants={fadeUp}
       whileHover={liftHover}
       whileTap={pressTap}
-      className="group flex min-h-48 flex-col items-center justify-center gap-3 rounded-card border-2 border-dashed border-line text-ink-500 transition-colors hover:border-honey-400 hover:bg-honey-50 hover:text-honey-600"
+      className={`group flex min-h-48 flex-col items-center justify-center gap-3 rounded-card border-2 border-dashed border-line text-ink-500 transition-[color,background-color,border-color,box-shadow] hover:border-honey-400 hover:bg-honey-50 hover:text-honey-600 ${glow}`}
     >
       <span className="grid size-12 place-items-center rounded-2xl bg-surface shadow-card transition-transform duration-300 group-hover:rotate-90">
         <PlusIcon size={22} weight="bold" />

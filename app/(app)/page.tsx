@@ -1,9 +1,9 @@
-import { CardsThreeIcon, CheckCircleIcon, ExamIcon, FireIcon, PlusIcon, TimerIcon } from "@phosphor-icons/react/ssr";
+import { ArrowRightIcon, BooksIcon, CardsThreeIcon, CheckCircleIcon, ExamIcon, FireIcon, PlayIcon, PlusIcon, TimerIcon } from "@phosphor-icons/react/ssr";
 import Link from "next/link";
 import { Bee } from "@/components/bee";
 import { AnimatedNumber, Item, Stagger } from "@/components/motion";
 import { NewSetCard, SetCard } from "@/components/set-card";
-import { buttonClass, SectionTitle } from "@/components/ui";
+import { buttonClass, pressable, SectionTitle } from "@/components/ui";
 import { getSets, getStats } from "@/lib/data";
 
 export default async function Home() {
@@ -38,7 +38,9 @@ export default async function Home() {
               <div className="honeycomb pointer-events-none absolute inset-0" />
               <div className="relative flex items-center justify-between gap-6">
                 <div className="min-w-0">
-                  <p className="text-xs font-bold uppercase tracking-wider opacity-70">Continue</p>
+                  <p className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider opacity-70">
+                    <PlayIcon size={12} weight="fill" /> Continue
+                  </p>
                   <h2 className="mt-2 truncate font-display text-2xl font-semibold sm:text-3xl">{next.title}</h2>
                   <p className="mt-1 text-sm font-medium opacity-75">
                     {next.knownCount} / {next.cardCount} known
@@ -49,13 +51,13 @@ export default async function Home() {
                   <div className="mt-6 flex flex-wrap gap-2">
                     <Link
                       href={`/sets/${next.id}/flashcards`}
-                      className="inline-flex h-11 items-center gap-2 rounded-2xl bg-honey-ink px-4 text-sm font-semibold text-honey-300 transition hover:bg-black active:scale-95"
+                      className={`inline-flex h-11 items-center gap-2 rounded-2xl bg-honey-ink px-4 text-sm font-semibold text-honey-300 hover:-translate-y-0.5 hover:bg-black hover:ring-4 hover:ring-honey-ink/15 ${pressable}`}
                     >
                       <CardsThreeIcon size={18} weight="fill" /> Flashcards
                     </Link>
                     <Link
                       href={`/sets/${next.id}/quiz`}
-                      className="inline-flex h-11 items-center gap-2 rounded-2xl bg-honey-ink/10 px-4 text-sm font-semibold transition hover:bg-honey-ink/20 active:scale-95"
+                      className={`inline-flex h-11 items-center gap-2 rounded-2xl bg-honey-ink/10 px-4 text-sm font-semibold hover:-translate-y-0.5 hover:bg-honey-ink/20 ${pressable}`}
                     >
                       <ExamIcon size={18} weight="fill" /> Quiz
                     </Link>
@@ -76,10 +78,11 @@ export default async function Home() {
       <section className="mt-12">
         <SectionTitle
           action={
-            <Link href="/library" className="text-sm font-semibold text-honey-600 hover:text-honey-700">
-              All sets
+            <Link href="/library" className={buttonClass("ghost", "group h-9 px-3 text-honey-600 hover:text-honey-700")}>
+              All sets <ArrowRightIcon size={14} weight="bold" className="transition-transform group-hover:translate-x-0.5" />
             </Link>
           }
+          icon={<BooksIcon size={22} weight="fill" />}
         >
           Your sets
         </SectionTitle>

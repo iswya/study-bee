@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowRightIcon, CheckIcon, XIcon } from "@phosphor-icons/react";
+import { ArrowCounterClockwiseIcon, ArrowLeftIcon, ArrowRightIcon, CardsThreeIcon, CheckIcon, XIcon } from "@phosphor-icons/react";
 import { AnimatePresence, motion } from "motion/react";
 import { useEffect, useMemo, useState } from "react";
 import type { Card } from "@/lib/types";
@@ -89,6 +89,7 @@ export function Quiz({ setId, title, cards }: { setId: string; title: string; ca
             actions={[
               {
                 label: "Try again",
+                icon: <ArrowCounterClockwiseIcon size={18} weight="bold" />,
                 primary: true,
                 onClick: () => {
                   setRound((r) => r + 1);
@@ -96,8 +97,8 @@ export function Quiz({ setId, title, cards }: { setId: string; title: string; ca
                   setResults([]);
                 },
               },
-              { label: "Flashcards", href: `/sets/${setId}/flashcards` },
-              { label: "Back to set", href: `/sets/${setId}` },
+              { label: "Flashcards", icon: <CardsThreeIcon size={18} weight="duotone" />, href: `/sets/${setId}/flashcards` },
+              { label: "Back to set", icon: <ArrowLeftIcon size={18} weight="bold" />, href: `/sets/${setId}` },
             ]}
           />
         ) : (
@@ -129,12 +130,12 @@ export function Quiz({ setId, title, cards }: { setId: string; title: string; ca
                           : { opacity: state === "dim" ? 0.4 : 1, y: 0, scale: state === "right" ? 1.02 : 1 }
                       }
                       transition={state === "wrong" ? { duration: 0.4 } : { ...spring, delay: answered ? 0 : i * 0.05 }}
-                      className={`group flex items-center gap-4 rounded-2xl border-2 p-4 text-left transition-colors ${
+                      className={`group flex items-center gap-4 rounded-2xl border-2 p-4 text-left transition-[border-color,background-color,box-shadow] duration-200 ${
                         state === "right"
                           ? "border-mint-500 bg-mint-50"
                           : state === "wrong"
                             ? "border-rose-500 bg-rose-50"
-                            : "border-line bg-surface hover:border-honey-400 hover:bg-honey-50"
+                            : "border-line bg-surface hover:border-honey-400 hover:bg-honey-50 hover:ring-4 hover:ring-honey-400/15 active:scale-[0.98]"
                       }`}
                     >
                       <span

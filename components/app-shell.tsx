@@ -10,6 +10,7 @@ import { accentStyles, type Accent } from "@/lib/types";
 import { spring } from "@/lib/motion";
 import { Logo } from "./logo";
 import { ThemeToggle } from "./theme-toggle";
+import { buttonClass, iconButtonClass, pressable } from "./ui";
 
 type RecentSet = { id: string; title: string; accent: Accent };
 
@@ -56,7 +57,7 @@ function Sidebar({ pathname, userName, recent }: { pathname: string; userName: s
         <Logo />
       </div>
 
-      <Link href="/new" className="group mt-8 flex h-11 items-center justify-center gap-2 rounded-2xl bg-honey-400 text-sm font-semibold text-honey-ink shadow-honey transition hover:bg-honey-300 active:scale-[0.97]">
+      <Link href="/new" className={buttonClass("primary", "group mt-8 w-full")}>
         <PlusIcon size={18} weight="bold" className="transition-transform duration-300 group-hover:rotate-90" />
         New set
       </Link>
@@ -68,8 +69,8 @@ function Sidebar({ pathname, userName, recent }: { pathname: string; userName: s
             <Link
               key={href}
               href={href}
-              className={`relative flex h-11 items-center gap-3 rounded-2xl px-3 text-sm font-semibold transition-colors ${
-                active ? "text-honey-600" : "text-ink-500 hover:text-ink-950"
+              className={`relative flex h-11 items-center gap-3 rounded-2xl px-3 text-sm font-semibold ${pressable} ${
+                active ? "text-honey-600" : "text-ink-500 hover:bg-ink-950/5 hover:text-ink-950"
               }`}
             >
               {active && <motion.span layoutId="sidebar-active" className="absolute inset-0 rounded-2xl bg-honey-50" transition={spring} />}
@@ -90,7 +91,7 @@ function Sidebar({ pathname, userName, recent }: { pathname: string; userName: s
                 <Link
                   key={set.id}
                   href={`/sets/${set.id}`}
-                  className={`flex items-center gap-3 rounded-xl px-3 py-2 text-sm transition-colors ${
+                  className={`flex items-center gap-3 rounded-xl px-3 py-2 text-sm ${pressable} ${
                     active ? "bg-ink-950/5 text-ink-950" : "text-ink-700 hover:bg-ink-950/[0.03] hover:text-ink-950"
                   }`}
                 >
@@ -110,7 +111,7 @@ function Sidebar({ pathname, userName, recent }: { pathname: string; userName: s
         <span className="min-w-0 flex-1 truncate text-sm font-semibold">{userName}</span>
         <ThemeToggle />
         <form action={signOut}>
-          <button aria-label="Sign out" title="Sign out" className="grid size-10 place-items-center rounded-xl text-ink-500 transition hover:bg-ink-950/5 hover:text-ink-950 active:scale-90">
+          <button aria-label="Sign out" title="Sign out" className={iconButtonClass}>
             <SignOutIcon size={20} weight="duotone" />
           </button>
         </form>
@@ -126,7 +127,7 @@ function TopBar() {
       <div className="flex items-center">
         <ThemeToggle />
         <form action={signOut}>
-          <button aria-label="Sign out" className="grid size-10 place-items-center rounded-xl text-ink-500 active:scale-90">
+          <button aria-label="Sign out" className={iconButtonClass}>
             <SignOutIcon size={20} weight="duotone" />
           </button>
         </form>
@@ -143,7 +144,7 @@ function BottomNav({ pathname }: { pathname: string }) {
         <Link
           href="/new"
           aria-label="New set"
-          className="-mt-8 grid size-14 place-items-center rounded-2xl bg-honey-400 text-honey-ink shadow-honey ring-4 ring-canvas transition active:scale-90"
+          className={`-mt-8 grid size-14 place-items-center rounded-2xl bg-honey-400 text-honey-ink shadow-honey ring-4 ring-canvas ${pressable}`}
         >
           <PlusIcon size={24} weight="bold" />
         </Link>
@@ -157,7 +158,7 @@ function BottomNavItem({ href, label, icon: NavIcon, active }: (typeof nav)[numb
   return (
     <Link
       href={href}
-      className={`relative flex w-20 flex-col items-center gap-1 py-2 text-[11px] font-semibold transition-colors ${
+      className={`relative flex w-20 flex-col items-center gap-1 py-2 text-[11px] font-semibold ${pressable} ${
         active ? "text-honey-600" : "text-ink-400"
       }`}
     >

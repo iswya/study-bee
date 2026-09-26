@@ -3,7 +3,7 @@
 import { CheckCircleIcon, PlusIcon, SpinnerGapIcon, TrashIcon } from "@phosphor-icons/react";
 import { AnimatePresence, motion } from "motion/react";
 import { useActionState, useRef, useState, useTransition } from "react";
-import { cardClass, buttonClass, inputClass } from "@/components/ui";
+import { buttonClass, cardClass, inputClass, pressable } from "@/components/ui";
 import { addCard, deleteCard, deleteSet } from "@/lib/actions";
 import type { Card } from "@/lib/types";
 import { spring } from "@/lib/motion";
@@ -54,7 +54,7 @@ function CardRow({ setId, card, index }: { setId: string; card: Card; index: num
       animate={{ opacity: pending ? 0.4 : 1, height: "auto" }}
       exit={{ opacity: 0, height: 0 }}
       transition={spring}
-      className="group"
+      className="group transition-colors hover:bg-ink-950/[0.02]"
     >
       <div className="grid grid-cols-[2rem_1fr_auto] items-start gap-3 p-4 sm:grid-cols-[2rem_1fr_1fr_auto]">
         <span className="pt-0.5 text-xs font-bold tabular-nums text-ink-400">
@@ -65,7 +65,7 @@ function CardRow({ setId, card, index }: { setId: string; card: Card; index: num
         <button
           onClick={() => startTransition(() => deleteCard(setId, card.id))}
           aria-label="Delete card"
-          className="col-start-3 row-start-1 grid size-8 place-items-center rounded-lg text-ink-400 opacity-100 transition hover:bg-rose-50 hover:text-rose-600 sm:col-start-4 sm:opacity-0 sm:group-hover:opacity-100 sm:focus:opacity-100"
+          className={`col-start-3 row-start-1 grid size-8 place-items-center rounded-lg text-ink-400 hover:bg-rose-50 hover:text-rose-600 sm:col-start-4 sm:opacity-0 sm:group-hover:opacity-100 sm:focus:opacity-100 ${pressable}`}
         >
           <TrashIcon size={16} weight="duotone" />
         </button>

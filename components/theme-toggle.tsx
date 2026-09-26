@@ -3,6 +3,7 @@
 import { MoonIcon, SunIcon } from "@phosphor-icons/react";
 import { AnimatePresence, motion } from "motion/react";
 import { useSyncExternalStore } from "react";
+import { iconButtonClass } from "./ui";
 
 function subscribe(onChange: () => void) {
   const observer = new MutationObserver(onChange);
@@ -28,7 +29,7 @@ export function ThemeToggle({ className = "" }: { className?: string }) {
       onClick={toggle}
       aria-label={light ? "Switch to dark mode" : "Switch to light mode"}
       title={light ? "Dark mode" : "Light mode"}
-      className={`grid size-10 place-items-center overflow-hidden rounded-xl text-ink-500 transition hover:bg-ink-950/5 hover:text-ink-950 active:scale-90 ${className}`}
+      className={`${iconButtonClass} overflow-hidden ${className}`}
     >
       <AnimatePresence mode="wait" initial={false}>
         <motion.span

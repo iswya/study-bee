@@ -7,7 +7,7 @@ import { Bee } from "./bee";
 import { AnimatedNumber, ProgressRing } from "./motion";
 import { buttonClass } from "./ui";
 
-type Action = { label: string; primary?: boolean } & ({ onClick: () => void } | { href: string });
+type Action = { label: string; icon?: React.ReactNode; primary?: boolean } & ({ onClick: () => void } | { href: string });
 
 // Honey hexagons that burst out behind the score.
 function Burst() {
@@ -70,10 +70,12 @@ export function Results({ correct, total, saving, actions }: { correct: number; 
         {actions.map((a) =>
           "href" in a ? (
             <Link key={a.label} href={a.href} className={buttonClass(a.primary ? "primary" : "outline")}>
+              {a.icon}
               {a.label}
             </Link>
           ) : (
             <button key={a.label} onClick={a.onClick} className={buttonClass(a.primary ? "primary" : "outline")}>
+              {a.icon}
               {a.label}
             </button>
           )

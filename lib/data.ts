@@ -1,4 +1,5 @@
 import "server-only";
+import { cache } from "react";
 import { createClient } from "@/lib/supabase/server";
 import type { Accent, Card, StudySet, StudySetSummary } from "@/lib/types";
 
@@ -26,17 +27,21 @@ function summarize(row: SetRow): StudySetSummary {
   };
 }
 
-export async function getUser() {
+// getClaims verifies the login token locally (no round trip to Supabase),
+// and cache() dedupes it within one request.
+export const getUser = cache(async () => {
   const supabase = await createClient();
-  const { data } = await supabase.auth.getUser();
-  if (!data.user) return null;
-  const meta = data.user.user_metadata as { display_name?: string };
+  const { data } = await supabase.auth.getClaims();
+  const claims = data?.claims;
+  if (!claims) return null;
+  const meta = (claims.user_metadata ?? {}) as { display_name?: string };
+  const email = typeof claims.email === "string" ? claims.email : "";
   return {
-    id: data.user.id,
-    email: data.user.email ?? "",
-    name: meta.display_name || data.user.email?.split("@")[0] || "you",
+    id: claims.sub,
+    email,
+    name: meta.display_name || email.split("@")[0] || "you",
   };
-}
+});
 
 export async function getSets(): Promise<StudySetSummary[]> {
   const supabase = await createClient();

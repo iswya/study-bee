@@ -8,12 +8,12 @@ export const ease = [0.22, 1, 0.36, 1] as const; // quick out, gentle settle
 
 export const stagger: Variants = {
   hidden: {},
-  show: { transition: { staggerChildren: 0.06, delayChildren: 0.04 } },
+  show: { transition: { staggerChildren: 0.04 } },
 };
 
 export const fadeUp: Variants = {
-  hidden: { opacity: 0, y: 14 },
-  show: { opacity: 1, y: 0, transition: { duration: 0.5, ease } },
+  hidden: { opacity: 0, y: 10 },
+  show: { opacity: 1, y: 0, transition: { duration: 0.35, ease } },
 };
 
 // Hover / press feel for anything clickable that's card-shaped.

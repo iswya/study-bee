@@ -137,6 +137,11 @@ body {
   outline-offset: 3px;
   border-radius: 12px;
 }
+/* Inputs have their own focus ring */
+input:focus-visible,
+textarea:focus-visible {
+  outline: none;
+}
 
 /* Honeycomb pattern (used on honey-colored cards) */
 .honeycomb {

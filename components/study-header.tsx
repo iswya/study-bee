@@ -3,6 +3,7 @@
 import { XIcon } from "@phosphor-icons/react";
 import Link from "next/link";
 import { ProgressBar } from "./motion";
+import { iconButtonClass } from "./ui";
 
 // Minimal top bar for focus mode (flashcards / quiz).
 export function StudyHeader({ setId, title, done, total }: { setId: string; title: string; done: number; total: number }) {
@@ -11,7 +12,7 @@ export function StudyHeader({ setId, title, done, total }: { setId: string; titl
       <Link
         href={`/sets/${setId}`}
         aria-label="Stop studying"
-        className="grid size-11 shrink-0 place-items-center rounded-2xl border border-line bg-surface text-ink-500 transition hover:text-ink-950 active:scale-90"
+        className={`${iconButtonClass} size-11 shrink-0 rounded-2xl border border-line bg-surface`}
       >
         <XIcon size={20} weight="bold" />
       </Link>
