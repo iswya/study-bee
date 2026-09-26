@@ -39,5 +39,6 @@ export function fileKind(file: File) {
 export async function readDocx(file: File) {
   const mammoth = (await import("mammoth")).default;
   const { value } = await mammoth.extractRawText({ arrayBuffer: await file.arrayBuffer() });
-  return value.replace(/\n{3,}/g, "\n\n").trim();
+  // Word separates every paragraph with a blank line; one line each reads better.
+  return value.replace(/\n\s*\n/g, "\n").trim();
 }
